@@ -1,0 +1,729 @@
+=== PAGINA 1 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 1
+ Horta de morangos: tabelas de estados, falhas e alertas
+ ESP32 + 2 bombas diafragma (irrigação e névoa) + app · versão com as regras de comportamento definidas pelo projeto
+1. Regras de comportamento do sistema
+Entrada (sensor)
+Condição
+Ação do sistema
+Observação
+Umidade do ar + temperatura do
+ar (DHT22)
+UR muito baixa ou temperatura alta
+Aciona a bomba de aspersão (névoa) em pulsos
+Trava de segurança: não nebuliza com UR já muito alta
+(ajustável); em calor extremo vira pulsos de emergência
+Umidade do solo
+Baixa (abaixo do mínimo)
+Aciona a irrigação
+Para ao atingir o máximo ou no tempo limite de segurança
+Temp. do substrato (DS18B20)
+Alta (acima do limite)
+Somente alerta ao app. Nenhum atuador é acionado
+Alerta com histerese e sem repetição em excesso
+Nível de água (boia)
+Abaixo da boia
+Alerta ao app + bloqueio das bombas (proteção contra bomba
+a seco)
+O bloqueio é configurável no app; o alerta sempre existe
+App
+Ajuste de limites e modo manual
+Limites de operação editáveis; liga/desliga independente da
+irrigação e da aspersão
+Manual serve para testes do sistema; tem tempo limite e
+interlocks mínimos
+Decisão assumida (confirme): pela sua regra a boia só envia alerta. Mantive o alerta e também bloqueei as bombas por padrão, porque bomba diafragma rodando a seco por muito
+tempo danifica. Se preferir só o alerta, desative "bloquear bombas sem água" nos parâmetros. Outra decisão: UR "muito baixa" usa o padrão de 50% (ajustável).
+2. Parâmetros ajustáveis no app (salvos na memória do ESP32)
+Parâmetro
+Padrão
+Faixa aceita
+Descrição
+solo_min / solo_max
+60% / 75%
+30–80 / 50–95
+Liga a irrigação abaixo do mínimo, desliga ao atingir o máximo (máximo ≥ mínimo + 5)
+irrig_max_s
+300 s
+30–600
+Tempo máximo contínuo por ciclo de irrigação
+cooldown_irrig_min
+10 min
+5–30
+Espera entre ciclos para a água infiltrar e o sensor estabilizar
+irrig_max_ciclos_dia
+20
+5–40
+Limite diário de ciclos (evita encharcar se o sensor falhar)
+janela_irrig
+desligada (06:00–17:00)
+liga/desliga + horários
+Restringe a irrigação automática a um horário (folha molhada à noite favorece fungo)
+irrig_programada (fallback)
+3x/dia · 60 s · 07h/12h/16h
+editável
+Usada só quando o sensor de solo falha
+temp_nevoa_on / histerese
+28 °C / 3 °C
+22–40 / 1–6
+Liga com T_ar acima de on; desliga abaixo de (on − histerese)
+ur_min_nevoa
+50%
+30–70
+UR do ar abaixo disso aciona a névoa; desliga com +10 pontos de folga
+ur_trava_nevoa
+90%
+80–98
+Acima disso a névoa não liga (contraproducente e risco de fungo)
+pulso_nevoa_s / pausa_nevoa_min
+60 s / 5 min
+10–120 / 1–30
+Duração do pulso e pausa mínima entre pulsos
+temp_emergencia
+35 °C
+30–45
+Acima disso: pulsos 30 s ligado / 2 min desligado, ignorando a trava de UR até 95%
+temp_raiz_alerta
+26 °C
+20–35
+Alerta de substrato quente (limpa com histerese de 2 °C)
+bloquear_bombas_sem_agua
+ligado
+liga/desliga
+Bloqueia as duas bombas quando a boia indica nível baixo
+manual_irrig_s / manual_nevoa_s
+120 s / 30 s
+10–600 / 5–120
+Tempo padrão do comando manual ON (o usuário pode escolher outro)
+O ESP32 valida toda configuração recebida (faixas acima, máximo > mínimo, on > off). Valor inválido é rejeitado com alerta CONFIG_INVALIDA e o valor anterior é mantido.
+
+
+=== PAGINA 2 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 2
+3. Tabela mestra de estados
+As máquinas rodam em paralelo e de forma independente no ESP32, mesmo sem Wi-Fi. Cor da linha: verde = atuador ligado · cinza = repouso · azul = espera · amarelo =
+manual · laranja/vermelho = falha ou bloqueio.
+Máquina
+Estado
+Saída (atuador)
+Entra quando
+Sai quando
+Alerta ao app
+Irrigação
+IDLE
+B1 off
+Início, fim de COOLDOWN, reset de falha
+ou fim de bloqueio
+solo < solo_min, nível OK, cooldown vencido, ciclos do dia <
+limite (e janela horária, se ativa) → IRRIGANDO
+—
+Irrigação
+IRRIGANDO
+B1 ON
+Condição de IDLE satisfeita
+solo ≥ solo_max ou t ≥ irrig_max_s → COOLDOWN
+—
+Irrigação
+COOLDOWN
+B1 off
+Fim de IRRIGANDO
+Após cooldown_irrig_min → IDLE. Se o ciclo terminou por tempo
+sem a umidade subir > 5 pts, conta 1 falha; 3 seguidas →
+FALHA_IRRIG
+IRRIG_FALHA (na 3ª)
+Irrigação
+BLOQUEIO_AGUA
+B1 off
+Boia indica nível baixo por 5 s (qualquer
+estado)
+Boia OK por 10 s contínuos → IDLE
+NIVEL_BAIXO
+Irrigação
+FALHA_IRRIG
+B1 off
+3 ciclos seguidos sem efeito
+Reset no app (ou teste manual bem-sucedido) → IDLE
+IRRIG_FALHA
+Irrigação
+SEM_SENSOR_SOLO
+B1 por tempo fixo
+(programada)
+Leitura do solo inválida por > 60 s
+Leitura válida por 2 min → IDLE
+SOLO_FALHA
+Névoa
+IDLE
+B2 off
+Início, fim de PAUSA ou reset
+(T_ar > temp_nevoa_on ou UR < ur_min_nevoa) e UR < ur_trava
+e nível OK → NEBULIZANDO
+—
+Névoa
+NEBULIZANDO
+B2 ON (3
+microaspersores)
+Condição de IDLE satisfeita
+Temperatura e UR recuperadas, UR ≥ ur_trava ou t ≥
+pulso_nevoa_s → PAUSA
+—
+Névoa
+PAUSA
+B2 off
+Fim de NEBULIZANDO
+Após pausa_nevoa_min → IDLE. Se T_ar > temp_nevoa_on e sem
+efeito (UR +3 pts ou −0,5 °C) por 3 pulsos → FALHA_NEVOA
+NEVOA_FALHA (na 3ª)
+Névoa
+EMERGENCIA_CALOR
+B2 pulsos 30 s on / 2 min
+off
+T_ar > temp_emergencia
+T_ar < temp_emergencia − 2 °C → PAUSA
+CALOR_EMERG
+Névoa
+BLOQUEIO_AGUA
+B2 off
+Boia indica nível baixo por 5 s
+Boia OK por 10 s → IDLE
+NIVEL_BAIXO
+Névoa
+FALHA_NEVOA
+B2 off (1 pulso de teste a
+cada 30 min)
+3 pulsos seguidos sem efeito
+Pulso de teste com efeito ou reset no app → IDLE
+NEVOA_FALHA
+Névoa
+SEM_DHT
+B2 off (opcional: pulsos
+limitados)
+Leitura do DHT22 inválida por > 60 s
+5 leituras válidas seguidas → IDLE
+DHT_FALHA
+Substrato
+ALERTA_RAIZ
+nenhum (só alerta)
+T_raiz > temp_raiz_alerta
+T_raiz < limite − 2 °C
+TEMP_RAIZ_ALTA
+Manual (cada
+bomba)
+AUTO
+decidido pela FSM
+Padrão; fim do tempo manual; comando
+"voltar ao AUTO"
+Comando manual ON/OFF → MANUAL_ON / MANUAL_OFF
+—
+Manual (cada
+bomba)
+MANUAL_ON
+bomba ON por T segundos
+Comando ON no app (T ajustável, máx. 10
+min)
+Fim de T, comando OFF, nível baixo (se bloqueio ativo) → AUTO
+ou OFF
+—
+Manual (cada
+bomba)
+MANUAL_OFF
+bomba off (travada)
+Comando OFF no app
+Voltar ao AUTO (ou expira em 1 h)
+MODO_MANUAL
+(lembrete)
+Prioridade entre regras (de cima para baixo): 1) proteções de hardware (watchdog, tempo máximo, duty cycle); 2) bloqueio por falta de água; 3) comando manual; 4) automático; 5)
+fallback programado. Estados de falha bloqueiam o automático, mas o manual continua liberado para diagnóstico.
+
+
+=== PAGINA 3 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 3
+4. Falhas e mitigação: sensores
+Regra geral de leitura: média móvel/mediana de várias amostras, descarte de valores impossíveis e contagem de leituras inválidas consecutivas antes de declarar falha (evita
+falso alarme por ruído).
+Componente
+Falha possível
+Como detectar
+Comportamento do sistema
+Alerta (código)
+Recuperação
+DHT22 (T e UR
+do ar)
+Sem resposta / NaN (fio
+solto, sensor queimado)
+3 leituras seguidas inválidas ou erro de
+checksum
+Mantém a última leitura válida por até 60 s. Depois
+disso a névoa automática vai para SEM_DHT
+(bloqueada). Irrigação não é afetada. Manual segue
+disponível. Opcional no app: pulsos de névoa
+agendados e limitados (11h–16h)
+DHT_FALHA (crítico)
+Volta ao AUTO após 5 leituras válidas
+seguidas
+DHT22
+Valor impossível ou salto
+brusco (T fora de
+−10…60 °C, UR fora de
+0…100, salto > 10 °C em
+2 s)
+Filtro de plausibilidade a cada amostra
+Descarta a amostra e usa a anterior; se persistir,
+mesmo tratamento de "sem resposta"
+DHT_FALHA
+Automática
+DHT22
+Saturado em ~100% por
+excesso de névoa ou
+condensação
+UR ≥ 98% por > 30 min, ou UR sobe a
+100% logo após pulso e não desce
+Névoa bloqueada pela trava de UR. Não é tratado
+como falha de bomba (evita falso alarme)
+UR_ALTA (aviso)
+Automática quando UR cai; revisar
+posição do sensor (abrigo ventilado)
+DS18B20
+(temp.
+substrato)
+Desconectado, CRC com
+erro, leitura −127 °C ou
+85 °C (valor de ligação)
+Leitura exatamente −127,0 / 85,0 ou fora
+de −10…60 °C, ou 3 erros seguidos
+Nenhuma decisão automática depende dele, então o
+sistema segue normal. O app mostra "sem leitura" e
+o alerta de substrato quente fica inativo
+DS18_FALHA (aviso)
+Automática após 3 leituras válidas
+DS18B20
+Temperatura real alta (>
+temp_raiz_alerta)
+Comparação com o limite ajustável
+Somente alerta ao app. Nenhuma bomba é
+acionada. Alerta repetido no máximo a cada 1 h
+TEMP_RAIZ_ALTA
+(aviso)
+Alerta some com histerese de 2 °C
+Umidade do
+solo
+Cabo solto ou curto (ADC
+~0 ou ~4095, fora da
+faixa calibrada)
+Leitura fora da faixa calibrada ± margem
+por > 60 s
+FSM de irrigação vai para SEM_SENSOR_SOLO:
+irrigação programada por tempo fixo (3x/dia, 60 s)
+com o limite diário de ciclos mantido. Não irriga
+continuamente
+SOLO_FALHA (crítico)
+Leitura válida por 2 min → volta ao
+AUTO
+Umidade do
+solo
+Sensor "preso" ou bomba
+sem efeito (umidade não
+sobe após irrigar)
+Ciclo termina por tempo sem subir > 5
+pts; 3 ciclos seguidos
+Irrigação automática suspensa (FALHA_IRRIG) para
+não encharcar. A mensagem lista as causas: sensor,
+bomba, mangueira ou filtro. App oferece botão
+"Testar bomba" (manual)
+IRRIG_FALHA (crítico)
+Reset no app depois do reparo ou
+teste manual bem-sucedido
+Umidade do
+solo
+Deriva por corrosão, sal
+ou calibração perdida
+Umidade ≥ 95% por > 24 h sem irrigar,
+ou nunca abaixo de solo_min em dias
+secos
+Mantém o controle com limites de segurança (tempo
+por ciclo e ciclos por dia). Recomenda recalibrar
+SOLO_CALIBRAR
+(aviso)
+Recalibrar seco/água e salvar
+Boia de nível
+Fio rompido ou conector
+solto
+Boia ligada como "fechada = tem água":
+fio aberto lê como nível baixo (fail-safe)
+Bloqueia as bombas (se bloqueio ativo) e alerta. É a
+falha mais segura: o pior caso é parar
+NIVEL_BAIXO (crítico)
+Reparar fio; volta após 10 s de nível
+OK
+Boia de nível
+Travada em "OK" com
+reservatório vazio (suja
+ou emperrada)
+Indireta: bomba acumulou mais de X min
+ligada desde o último nível OK
+confirmado, ou falha de irrigação sem
+causa
+Alerta pedindo conferir boia/reservatório. Limite de
+tempo contínuo evita bomba a seco prolongada
+BOIA_SUSPEITA
+(aviso)
+Limpar/ajustar boia; app confirma o
+reabastecimento
+Boia de nível
+Oscilação por ondulação
+da água ou ruído
+Mudanças rápidas de estado
+Debounce: 5 s para declarar baixo, 10 s para voltar a
+OK
+—
+Automática
+Boia de nível
+Travada em "baixo" com
+água disponível
+Nível baixo contínuo por > 24 h
+Bloqueio mantido. Para teste, o app permite "ignorar
+boia" por até 2 min com confirmação
+NIVEL_BAIXO
+Limpar/trocar a boia
+
+
+=== PAGINA 4 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 4
+5. Falhas e mitigação: atuadores e infraestrutura
+Limitação importante: com a lista atual de peças não há sensor de fluxo nem de corrente, então falha de bomba é detectada pelo efeito (umidade do solo sobe? UR sobe ou temperatura
+cai?). Isso funciona, mas é indireto e demora alguns ciclos. Para detecção direta, o ideal é acrescentar um sensor de fluxo na saída de cada bomba ou um sensor de corrente (ex.: INA219) na
+linha de 12 V.
+Componente
+Falha possível
+Como detectar
+Comportamento do sistema
+Alerta (código)
+Recuperação
+Bomba B1
+(irrigação)
+Não liga (bomba
+queimada, fio solto, relé
+com defeito)
+Umidade do solo não sobe após o ciclo (3
+ciclos seguidos)
+Estado FALHA_IRRIG: irrigação automática suspensa
+e alerta crítico. Manual continua liberado para teste
+IRRIG_FALHA (crítico)
+Reparar; "Testar bomba" no app;
+reset
+Bomba B1
+Sem fluxo (ar na linha,
+filtro ou gotejador
+entupido, mangueira
+solta)
+Mesmo critério de efeito; com sensor de
+fluxo opcional, detecção em segundos
+Idem acima. A mensagem sugere verificar filtro e
+mangueira
+IRRIG_FALHA
+Desentupir, escorvar e testar
+Bomba B1
+Vazamento (mangueira
+rompida, conexão solta)
+Boia indica nível baixo cedo demais: < X
+min de bomba acumulada desde o último
+nível OK
+Bloqueio por água baixa protege a bomba. Alerta
+específico de vazamento
+VAZAMENTO_SUSPEI
+TO (crítico)
+Reparar, reabastecer
+Bomba B2
+(névoa) + 3 mi
+croaspersores
+Não liga ou sem pressão
+(bomba, bico, mangueira)
+Com T_ar > limite: após 3 pulsos
+seguidos, UR não sobe ≥ 3 pts e
+temperatura não cai ≥ 0,5 °C
+Estado FALHA_NEVOA: para de nebulizar, alerta
+crítico e mantém o monitoramento. Tenta 1 pulso de
+teste a cada 30 min (se voltar a ter efeito, retoma).
+O app avisa para ventilar as laterais da lona
+manualmente
+NEVOA_FALHA
+(crítico)
+Reparar; pulso de teste com efeito ou
+reset
+Microaspersor
+es
+1 ou 2 bicos entupidos (a
+bomba funciona, o efeito
+cai)
+Efeito menor que a metade do esperado,
+de forma repetida
+Sistema segue funcionando; alerta de manutenção
+preventiva
+BICO_ENTUPIDO
+(aviso)
+Limpar bicos (ex.: vinagre) e filtrar a
+água
+Bomba B2
+Vazamento ou mangueira
+solta
+Mesmo critério de vazamento da B1
+Bloqueio por água baixa e alerta
+VAZAMENTO_SUSPEI
+TO
+Reparar
+Bombas B1/B2
+Bomba a seco
+(reservatório vazio e boia
+falha)
+Boia, mais limites de tempo
+Limites rígidos: irrigação 5 min, pulso de névoa 60 s,
+manual 10 min. Limite de duty cycle por hora (ex.:
+15 min de irrigação e 5 min de névoa por hora)
+BOMBA_TEMPO_EXC
+EDIDO (aviso)
+Automática; verificar nível
+Relé (R1/R2)
+Contato colado (bomba
+não desliga)
+Indireta: UR do solo ≥ 95% por > 15 min
+após comando OFF, ou boia caindo fora
+de ciclo, ou UR ≥ 98% com B2 off
+Alerta crítico. Mitigação recomendada: usar o R3
+como "corte geral" em série com o 12 V das
+bombas; o ESP32 abre o R3 se suspeitar de relé
+colado
+BOMBA_PRESA
+(crítico)
+Trocar módulo de relé; manter R3
+como proteção
+Relé (R1/R2)
+Disparo indevido na
+inicialização do ESP32
+Prevenção, não detecção
+Definir o nível de desligado no pino antes de
+configurá-lo como saída; evitar pinos de boot (GPIO
+0, 2, 12, 15); módulo com optoacoplador e diodo
+flyback em cada bomba
+—
+—
+Partida
+simultânea
+Pico de corrente das duas
+bombas derruba a fonte
+Reset por brownout, ou queda de tensão
+Nunca ligar as duas bombas no mesmo instante:
+partida escalonada de 2 s. Fonte dimensionada para
+as duas
+REINICIO
+Automática
+
+
+=== PAGINA 5 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 5
+6. Falhas e mitigação: controle, energia e comunicação
+Componente
+Falha possível
+Como detectar
+Comportamento do sistema
+Alerta (código)
+Recuperação
+ESP32 /
+firmware
+Travamento ou reinício
+Watchdog de tarefa e motivo do reset
+registrado (ex.: brownout, watchdog)
+Relés sobem desligados. Configuração e modos
+voltam da memória; a FSM reinicia em IDLE com
+cooldown ativo (evita rajada de acionamentos).
+Modo manual ativo é cancelado
+REINICIO (aviso, com
+motivo)
+Automática
+ESP32
+Configuração corrompida
+na memória
+Checksum ou valor fora de faixa ao ler
+Carrega valores padrão seguros e avisa o usuário
+CONFIG_INVALIDA
+(aviso)
+Reenviar configuração pelo app
+ESP32
+Hora inválida (sem
+internet/NTP)
+Relógio não sincronizado
+Janela horária de irrigação é ignorada (irriga por
+umidade); programação de fallback usa o último
+horário conhecido ou fica desativada
+HORA_INVALIDA
+(aviso)
+Sincroniza ao voltar o Wi-Fi (ou usar
+módulo RTC)
+Wi-Fi / MQTT
+Queda de Wi-Fi ou do
+broker
+Reconexão com espera crescente. O app
+detecta pelo Last Will do MQTT e por
+batimento (heartbeat)
+O ESP32 continua em AUTO local com os últimos
+limites salvos. Alertas ficam em fila e são enviados
+na volta. Comando manual em andamento termina
+pelo próprio tempo
+OFFLINE (mostrado
+no app)
+Automática
+App / MQTT
+Comando atrasado,
+duplicado ou fora de hora
+Cada comando tem ID e validade
+Comando vencido é ignorado. Todo manual ON tem
+duração e nunca fica ligado indefinidamente
+—
+—
+Fonte 12 V
+Queda ou falha da fonte
+ESP32 deixa de responder (se também
+alimentado por ela); app vê OFFLINE
+Sem energia, bombas desligam (estado seguro). A
+planta fica sem irrigação, então o alerta OFFLINE é
+importante
+OFFLINE (crítico)
+Restabelecer energia; sugestão de
+nobreak/bateria 12 V
+Step-down 12
+→ 5 V
+Falha ou ruído na saída
+Brownout ou resets repetidos
+ESP32 reinicia e relés ficam desligados. Capacitor na
+saída e fio curto reduzem o risco
+REINICIO
+Trocar regulador
+7. Tabela de alertas para o app
+Código
+Severidade
+Mensagem
+Ação sugerida ao usuário
+NIVEL_BAIXO
+Crítico
+Reservatório abaixo da boia. Bombas bloqueadas (se ativo).
+Reabastecer
+TEMP_RAIZ_ALTA
+Aviso
+Substrato acima do limite. Nenhuma ação automática.
+Sombrear, ventilar, avaliar
+CALOR_EMERG
+Crítico
+T_ar acima de temp_emergencia. Pulsos de névoa ativos.
+Abrir a lona, ventilar
+GEADA
+Aviso
+T_ar abaixo de 5 °C. A lona não protege totalmente.
+Proteger as plantas
+UR_ALTA
+Aviso
+UR > 85% por > 30 min: risco de fungo. Névoa bloqueada.
+Ventilar a estufa
+DHT_FALHA / DS18_FALHA / SOLO_FALHA
+Crítico / Aviso / Crítico
+Sensor sem leitura válida. O sistema entrou no modo seguro correspondente.
+Verificar fiação e sensor
+BOIA_SUSPEITA
+Aviso
+Comportamento incompatível com a boia (travada?).
+Limpar a boia, conferir o nível
+IRRIG_FALHA
+Crítico
+3 ciclos de irrigação sem efeito. Automático suspenso.
+Checar bomba, mangueira, filtro, sensor;
+reset
+NEVOA_FALHA
+Crítico
+3 pulsos de névoa sem efeito. Automático suspenso (testa a cada 30 min).
+Checar bomba e bicos; ventilar
+manualmente
+BICO_ENTUPIDO
+Aviso
+Efeito da névoa abaixo do esperado.
+Limpar os microaspersores
+VAZAMENTO_SUSPEITO
+Crítico
+Reservatório esvaziando rápido demais.
+Procurar vazamento
+BOMBA_PRESA
+Crítico
+Suspeita de bomba/relé que não desliga. Corte geral acionado (se instalado).
+Desligar a fonte e trocar o relé
+
+
+=== PAGINA 6 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 6
+Código
+Severidade
+Mensagem
+Ação sugerida ao usuário
+BOMBA_TEMPO_EXCEDIDO
+Aviso
+Limite de tempo contínuo ou por hora atingido.
+Conferir nível e configuração
+REINICIO
+Aviso
+ESP32 reiniciou (motivo informado).
+Checar alimentação
+OFFLINE
+Crítico
+App sem sinal do ESP32 (Last Will/heartbeat).
+Checar energia e Wi-Fi
+HORA_INVALIDA / CONFIG_INVALIDA
+Aviso
+Hora não sincronizada ou configuração rejeitada.
+Conferir internet/enviar de novo
+MODO_MANUAL
+Info
+Atuador em manual há mais de 1 h (lembrete).
+Voltar ao AUTO
+
+
+=== PAGINA 7 ===
+Horta semi-hidropônica de morangos · Tabelas de estados, falhas e alertas
+Página 7
+8. Modo manual (testes e operação)
+Cada bomba tem modo próprio e independente: irrigar manualmente não afeta a névoa e vice-versa.
+Comando no app
+Efeito
+Limites e interlocks
+Fim
+Ligar irrigação (T s)
+B1 liga por T segundos, ignorando umidade, cooldown, janela horária
+e estados de falha
+T máximo de 10 min; bloqueio por falta de água continua valendo (se
+ativo); partida escalonada de 2 s
+Fim de T → AUTO
+Ligar aspersão (T s)
+B2 liga por T segundos, ignorando temperatura, UR, pausa e estados
+de falha
+T máximo de 10 min; trava de água; padrão 30 s para não encharcar
+Fim de T → AUTO
+Desligar (cada bomba)
+Desliga e mantém em MANUAL_OFF (a automação daquela bomba
+fica pausada)
+Lembrete após 1 h; expira em 1 h
+Voltar ao AUTO
+Voltar ao AUTO
+Devolve o controle à FSM da bomba
+—
+Imediato
+Ignorar boia (teste)
+Permite testar a bomba com nível baixo
+Até 2 min, com confirmação, uma bomba por vez
+Fim de 2 min
+Testar bomba (diagnóstico)
+Liga a bomba por 10 s e mostra a variação de umidade/temperatura
+no app
+Só manual; útil para validar FALHA_IRRIG / FALHA_NEVOA
+Fim do teste
+Resumo do que aconteceu nesta versão em relação à anterior: a névoa agora liga por temperatura alta ou UR baixa (antes era temperatura e UR); o substrato quente só alerta
+(removida a irrigação opcional); a irrigação deixa de ter janela horária por padrão; foram incluídos estados de falha, modos de fallback e a tabela de alertas.

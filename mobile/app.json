@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "PIEVI",
+    "slug": "pievi",
+    "scheme": "pievi",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-dev-client"
+    ],
+    "android": {
+      "package": "com.pievi.mobile.dev"
+    },
+    "ios": {
+      "supportsTablet": true
+    }
+  }
+}

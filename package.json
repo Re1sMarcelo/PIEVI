@@ -1,0 +1,22 @@
+{
+  "name": "pievi",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "mobile",
+    "api"
+  ],
+  "scripts": {
+    "dev:mobile": "npm run start -w mobile",
+    "dev:api": "npm run dev -w api",
+    "check": "npm run typecheck -w mobile && npm run typecheck -w api",
+    "build:api": "npm run build -w api",
+    "test:db": "node --test db/tests/schema.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11"
+  }
+}

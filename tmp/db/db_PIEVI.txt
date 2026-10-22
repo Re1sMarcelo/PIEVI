@@ -1,0 +1,125 @@
+-- CADASTRO -------------------------------------------------
+CREATE TABLE dispositivos (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome          text NOT NULL,                -- "Estufa 1"
+  chip_id       text UNIQUE NOT NULL,         -- MAC/ID do ESP32 (usado no tópico MQTT)
+  fuso_horario  text DEFAULT 'America/Sao_Paulo',
+  fw_versao     text,
+  ultimo_contato timestamptz,                 -- atualizado pelo heartbeat
+  online        boolean DEFAULT false,        -- via Last Will do MQTT
+  criado_em     timestamptz DEFAULT now()
+);
+
+CREATE TABLE usuarios (
+  id uuid PRIMARY KEY, nome text, email text UNIQUE NOT NULL
+);
+CREATE TABLE dispositivo_usuarios (
+  dispositivo_id uuid REFERENCES dispositivos, usuario_id uuid REFERENCES usuarios,
+  papel text CHECK (papel IN ('admin','operador','leitor')),
+  PRIMARY KEY (dispositivo_id, usuario_id)
+);
+
+-- CONFIGURAÇÃO ---------------------------------------------
+CREATE TABLE config_historico (
+  id               bigserial PRIMARY KEY,
+  dispositivo_id   uuid REFERENCES dispositivos,
+  versao           int NOT NULL,
+  solo_min         numeric, solo_max numeric,
+  irrig_max_s      int, cooldown_irrig_min int, irrig_max_ciclos_dia int,
+  janela_irrig_ativa boolean, janela_inicio time, janela_fim time,
+  temp_nevoa_on    numeric, histerese_nevoa numeric,
+  ur_min_nevoa     numeric, ur_trava_nevoa numeric,
+  pulso_nevoa_s    int, pausa_nevoa_min int,
+  temp_emergencia  numeric, temp_raiz_alerta numeric,
+  bloquear_bombas_sem_agua boolean DEFAULT true,
+  manual_irrig_s   int, manual_nevoa_s int,
+  alterado_por     uuid REFERENCES usuarios,
+  aplicada_no_esp  boolean DEFAULT false,     -- ESP32 confirmou o recebimento
+  criado_em        timestamptz DEFAULT now(),
+  UNIQUE (dispositivo_id, versao)
+);
+-- config_atual = view da maior versão aplicada por dispositivo
+
+CREATE TABLE calibracoes (
+  id bigserial PRIMARY KEY, dispositivo_id uuid REFERENCES dispositivos,
+  sensor text,                                 -- 'solo'
+  adc_seco int, adc_agua int, criado_em timestamptz DEFAULT now()
+);
+
+CREATE TABLE tipos_alerta (
+  codigo text PRIMARY KEY,                     -- 'NIVEL_BAIXO'
+  severidade text CHECK (severidade IN ('critico','aviso','info')),
+  mensagem text, acao_sugerida text
+);
+
+-- TELEMETRIA -----------------------------------------------
+CREATE TABLE leituras (                        -- 1 linha por amostra (ex.: a cada 60 s)
+  dispositivo_id uuid REFERENCES dispositivos,
+  ts             timestamptz NOT NULL,
+  temp_ar        numeric(4,1),
+  umid_ar        numeric(4,1),
+  temp_raiz      numeric(4,1),
+  umid_solo      numeric(4,1),
+  umid_solo_adc  int,                          -- valor cru, útil para recalibrar
+  nivel_ok       boolean,
+  -- NULL = sensor sem leitura válida (não grave 0 nem -127)
+  PRIMARY KEY (dispositivo_id, ts)
+);
+
+CREATE TABLE estado_atual (                    -- 1 linha por atuador, sempre atualizada
+  dispositivo_id uuid REFERENCES dispositivos,
+  atuador        text CHECK (atuador IN ('irrigacao','nevoa')),
+  estado_fsm     text,                         -- 'IDLE','IRRIGANDO','FALHA_NEVOA'...
+  modo           text CHECK (modo IN ('AUTO','MANUAL_ON','MANUAL_OFF')),
+  ligado         boolean,
+  tempo_restante_s int,
+  atualizado_em  timestamptz,
+  PRIMARY KEY (dispositivo_id, atuador)
+);
+
+-- EVENTOS --------------------------------------------------
+CREATE TABLE acionamentos (
+  id bigserial PRIMARY KEY, dispositivo_id uuid REFERENCES dispositivos,
+  atuador   text,                              -- 'irrigacao' | 'nevoa'
+  inicio    timestamptz NOT NULL,
+  fim       timestamptz,
+  duracao_s int,
+  origem    text CHECK (origem IN ('auto','manual','fallback','emergencia','teste')),
+  motivo    text,                              -- 'solo<min', 'T_ar>28', 'UR<50'...
+  solo_antes numeric, solo_depois numeric,     -- permite medir o "efeito" e detectar falha
+  temp_antes numeric, temp_depois numeric,
+  ur_antes numeric,  ur_depois numeric,
+  comando_id bigint                            -- se veio do app
+);
+
+CREATE TABLE transicoes_fsm (
+  id bigserial PRIMARY KEY, dispositivo_id uuid REFERENCES dispositivos,
+  maquina text,                                -- 'irrigacao' | 'nevoa'
+  de_estado text, para_estado text, motivo text,
+  ts timestamptz NOT NULL
+);
+
+CREATE TABLE alertas (
+  id bigserial PRIMARY KEY, dispositivo_id uuid REFERENCES dispositivos,
+  codigo text REFERENCES tipos_alerta,
+  detalhe jsonb,                               -- valores no momento (ex.: {"temp_raiz":27.1})
+  aberto_em timestamptz NOT NULL DEFAULT now(),
+  resolvido_em timestamptz,                    -- preenchido quando a condição some
+  reconhecido_por uuid REFERENCES usuarios, reconhecido_em timestamptz
+);
+
+CREATE TABLE comandos (
+  id bigserial PRIMARY KEY, dispositivo_id uuid REFERENCES dispositivos,
+  usuario_id uuid REFERENCES usuarios,
+  tipo text,         -- 'manual_on','manual_off','voltar_auto','reset_falha','testar_bomba','ignorar_boia','config'
+  atuador text, duracao_s int, payload jsonb,
+  criado_em timestamptz DEFAULT now(),
+  valido_ate timestamptz,                      -- comando vencido é ignorado
+  status text DEFAULT 'pendente',              -- pendente | enviado | executado | expirado | rejeitado
+  confirmado_em timestamptz
+);
+
+-- ÍNDICES --------------------------------------------------
+CREATE INDEX ON leituras (dispositivo_id, ts DESC);
+CREATE INDEX ON alertas (dispositivo_id, resolvido_em) WHERE resolvido_em IS NULL;
+CREATE INDEX ON acionamentos (dispositivo_id, atuador, inicio DESC);

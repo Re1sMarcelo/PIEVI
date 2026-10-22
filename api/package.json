@@ -1,0 +1,30 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "hash-password": "node scripts/hash-password.mjs",
+    "provision:operator": "tsx scripts/provision-operator.ts",
+    "db:check": "tsx scripts/check-db.ts",
+    "db:migrate-google": "tsx scripts/migrate-google.ts",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "test:simulator": "node tests/simulator-smoke.mjs",
+    "test:auth": "node --import tsx --test tests/auth.test.ts",
+    "test:google": "node --import tsx --test tests/google-auth.test.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.12.4",
+    "google-auth-library": "^11.3.1",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.0.0",
+    "typescript": "~6.0.3"
+  }
+}
