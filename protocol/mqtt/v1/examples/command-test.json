@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "type": "command",
+  "deviceId": "bancada-01",
+  "messageId": "00000000-0000-4000-8000-000000000063",
+  "createdAt": "2026-11-06T12:00:00Z",
+  "expiresAt": "2026-11-06T12:00:10Z",
+  "targetBootId": "00000000-0000-4000-8000-000000000001",
+  "targetBootNumber": 1,
+  "targetConnectionId": "00000000-0000-4000-8000-000000000002",
+  "commandId": "cmd-b1-test-001",
+  "pumpId": "B1",
+  "action": "TEST",
+  "durationSeconds": 10,
+  "supervisionConfirmed": false
+}

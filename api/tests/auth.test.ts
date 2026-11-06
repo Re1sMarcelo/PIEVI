@@ -204,7 +204,7 @@ test('banco indisponível responde 503 e não recorre ao demo ou à memória', a
 });
 
 test('health é público e a API não disponibiliza cadastro público', async () => {
-  assert.deepEqual((await app.inject({url:'/health?check=1'})).json(),{status:'ok',authStorage:'postgres',simulation:true,googleAuthEnabled:false});
+  assert.deepEqual((await app.inject({url:'/health?check=1'})).json(),{status:'ok',authStorage:'postgres',simulation:true});
   assert.equal((await app.inject({url:'/v1/devices/bancada-01/snapshot'})).statusCode,401);
   assert.equal((await app.inject({method:'POST',url:'/v1/auth/register',headers:await bearer(),payload:{}})).statusCode,404);
 });

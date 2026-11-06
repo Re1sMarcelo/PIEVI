@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "type": "event",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 16,
+  "messageId": "00000000-0000-4000-8000-000000000001:16",
+  "uptimeMs": 76000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:00:01Z",
+  "eventType": "fsm_transition",
+  "machine": "irrigation",
+  "fromState": "IDLE",
+  "toState": "RUNNING",
+  "reason": "Solo abaixo do mínimo."
+}

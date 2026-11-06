@@ -5,6 +5,7 @@ import type { Snapshot } from '../../../api/src/contracts';
 import { BotanicalArt } from './Illustrations';
 import { Icon, type IconName } from './Icon';
 import { colors } from './theme';
+import { hasRecentState } from '../dashboardModel';
 
 export type Tab = 'Painel' | 'Histórico' | 'Alertas' | 'Controle';
 const tabs: { label: Tab; icon: IconName }[] = [
@@ -15,7 +16,7 @@ const titles: Record<Tab, string> = { Painel: 'Painel da estufa', Controle: 'Con
 
 export function PageHeader({ tab, snapshot, connected, onLogout }: { tab: Tab; snapshot: Snapshot | null; connected: boolean; onLogout: () => void }) {
   const insets = useSafeAreaInsets();
-  const online = connected && snapshot?.online;
+  const online = !!snapshot && hasRecentState(snapshot, connected, Date.now() + snapshot.simulationClockOffsetMs);
   const updated = snapshot ? new Date(snapshot.telemetry.occurredAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
   return (
     <LinearGradient colors={['#c52039', '#d11e35']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 9 }]}>
@@ -28,7 +29,7 @@ export function PageHeader({ tab, snapshot, connected, onLogout }: { tab: Tab; s
       {tab === 'Painel' && <View style={styles.statusRow}>
         <View style={styles.statusBadge}>
           <View style={[styles.dot, { backgroundColor: online ? '#299c43' : '#b6434b' }]} />
-          <Text style={styles.statusText}>{!connected ? 'Sem conexão' : !snapshot ? 'Conectando…' : online ? 'Simulador online' : 'Dispositivo offline'}</Text>
+          <Text style={styles.statusText}>{!connected ? 'API sem conexão' : !snapshot ? 'Conectando…' : !snapshot.online ? 'Dispositivo offline' : online ? 'Simulador online' : 'Dados desatualizados'}</Text>
         </View>
         <Text style={styles.updated}>Atualizado às {updated}</Text>
       </View>}

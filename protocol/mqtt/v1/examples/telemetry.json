@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "type": "telemetry",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 1,
+  "messageId": "00000000-0000-4000-8000-000000000001:1",
+  "uptimeMs": 61000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:00:01Z",
+  "airTemperatureC": 28.4,
+  "airHumidityPercent": 62.1,
+  "soilMoisturePercent": 66.5,
+  "substrateTemperatureC": 24.8,
+  "soilMoistureAdc": 1803,
+  "waterLevel": "OK",
+  "dhtReliable": true,
+  "soilReliable": true,
+  "rootReliable": true,
+  "activeCalibrationId": "00000000-0000-4000-8000-000000000003"
+}

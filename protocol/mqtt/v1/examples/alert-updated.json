@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "type": "event",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 14,
+  "messageId": "00000000-0000-4000-8000-000000000001:14",
+  "uptimeMs": 74000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:00:01Z",
+  "eventType": "alert",
+  "phase": "updated",
+  "episodeId": "00000000-0000-4000-8000-000000000030",
+  "code": "UR_ALTA",
+  "pumpId": "B2",
+  "severity": "critical",
+  "startedAt": "2026-11-06T12:00:01Z",
+  "detail": "UR >=98% por 30 minutos.",
+  "endedAt": null
+}

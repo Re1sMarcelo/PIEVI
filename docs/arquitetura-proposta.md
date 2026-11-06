@@ -1,5 +1,7 @@
 # Arquitetura e contratos propostos
 
+> Para implementar a integração física, a especificação de mensagens vigente é o [Contrato MQTT v1](contrato-mqtt-v1.md). Os exemplos de transporte desta proposta são a base histórica da fatia simulada. O [plano da entrega integrada](entrega-ambiente-integrado.md) diferencia contrato, persistência e transporte implementados.
+
 **Status: aprovada como base em 21/10/2026.** Esta especificação serve para a primeira fatia com dados simulados e para orientar a integração posterior com o ESP32. As regras de segurança serão executadas no firmware; o backend encaminha pedidos e registra resultados.
 
 ## Componentes
@@ -25,6 +27,8 @@ Todos os registros têm `deviceId`, horário ISO 8601 em UTC e um identificador 
 Todas as rotas, exceto login e saúde, exigem `Authorization: Bearer <token>`. O login usa senha validada contra hash no backend; o token expira e pode ser revogado. O app guarda o token em armazenamento seguro do sistema.
 
 Atualização aprovada em 22/10/2026: o login aceita usuário ou e-mail cadastrado, usando a mesma senha. O campo JSON `username` aceita ambos os identificadores para preservar o contrato; a resposta mantém o nome de usuário canônico. O cadastro segue controlado para o operador único.
+
+Atualização de 23/10/2026: a proposta anterior de autenticação Google foi retirada. O PIEVI mantém login local por usuário ou e-mail e senha; não requer OAuth Google.
 
 | Método | Rota | Função |
 | --- | --- | --- |

@@ -1,0 +1,212 @@
+[
+  {
+    "file": "telemetry.json",
+    "topic": "pievi/v1/devices/bancada-01/telemetry",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "telemetry-unavailable.json",
+    "topic": "pievi/v1/devices/bancada-01/telemetry",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "state.json",
+    "topic": "pievi/v1/devices/bancada-01/state",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "state-manual.json",
+    "topic": "pievi/v1/devices/bancada-01/state",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "state-alert.json",
+    "topic": "pievi/v1/devices/bancada-01/state",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "presence-online.json",
+    "topic": "pievi/v1/devices/bancada-01/presence",
+    "qos": 1,
+    "retain": true,
+    "publisher": "esp32"
+  },
+  {
+    "file": "presence-offline.json",
+    "topic": "pievi/v1/devices/bancada-01/presence",
+    "qos": 1,
+    "retain": true,
+    "publisher": "esp32"
+  },
+  {
+    "file": "sync.json",
+    "topic": "pievi/v1/devices/bancada-01/sync",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "receipt-stored.json",
+    "topic": "pievi/v1/devices/bancada-01/receipts",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "receipt-duplicate.json",
+    "topic": "pievi/v1/devices/bancada-01/receipts",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "receipt-rejected.json",
+    "topic": "pievi/v1/devices/bancada-01/receipts",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-auto.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-manual_on.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-manual_off.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-test.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-reset_fault.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-ignore_float.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "command-config.json",
+    "topic": "pievi/v1/devices/bancada-01/commands",
+    "qos": 1,
+    "retain": false,
+    "publisher": "backend"
+  },
+  {
+    "file": "ack-accepted.json",
+    "topic": "pievi/v1/devices/bancada-01/acks",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "ack-rejected.json",
+    "topic": "pievi/v1/devices/bancada-01/acks",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "ack-completed.json",
+    "topic": "pievi/v1/devices/bancada-01/acks",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "ack-config.json",
+    "topic": "pievi/v1/devices/bancada-01/acks",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "cycle-started.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "cycle-finished.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "cycle-unsynchronized.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "alert-opened.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "alert-updated.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "alert-resolved.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "fsm-transition.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  },
+  {
+    "file": "calibration.json",
+    "topic": "pievi/v1/devices/bancada-01/events",
+    "qos": 1,
+    "retain": false,
+    "publisher": "esp32"
+  }
+]

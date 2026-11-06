@@ -2,11 +2,12 @@
 
 Modelo revisado a partir de [`tmp/db/db_PIEVI.txt`](../tmp/db/db_PIEVI.txt), preservado como referência original. A [revisão detalhada](../docs/revisao-modelo-banco.md) explica as correções, os limites de responsabilidade do banco e a política aprovada de operador único com cadastro controlado.
 
+Para o responsável pelo firmware e sensores, consulte o [guia de integração ESP32 e banco](../docs/guia-banco-esp32-sensores.md), com estrutura, dicionário de campos, exemplos MQTT, consultas SQL e roteiro de bancada. A [versão em PDF](../output/pdf/PIEVI-guia-banco-ESP32-sensores.pdf) está pronta para compartilhar.
+
 | Arquivo | Finalidade |
 | --- | --- |
 | `001_schema.sql` | Estrutura inicial: identidade, sessões, dispositivos, comandos, configuração, telemetria e histórico |
 | `002_catalogo_alertas.sql` | Catálogo dos 20 alertas do documento de estados, com as decisões aprovadas |
-| `003_google_auth.sql` | Extensão opcional para vincular identidades Google e guardar solicitações pendentes; sem aprovação automática |
 | `consultas-autenticacao.sql` | Exemplos parametrizados para cadastro controlado, login, sessão e autorização por bancada |
 | `tests/schema.test.mjs` | Cenários de integração SQL em PostgreSQL isolado com PGlite |
 
@@ -31,5 +32,3 @@ Se já houver tabelas/dados, preparar uma migração `ALTER TABLE` específica a
 ## Estado da aplicação
 
 A autenticação da API já usa PostgreSQL quando `DATABASE_URL` está configurada: usuário, sessões e autorização por bancada são consultados no banco. O [guia de autenticação local](../docs/autenticacao-local.md) explica o provisionamento controlado do operador. Leituras, comandos, configuração e alertas continuam no simulador em memória; a persistência desses recursos será integrada depois.
-
-Para testar Google no Android, aplique também `003_google_auth.sql` uma vez com `npm.cmd run db:migrate-google -w api` e configure o ID OAuth Web. Siga a seção Google do [guia Android](../GUIA-ANDROID-EXPO-GO.md). A extensão não altera contas/senhas existentes e não libera novos operadores.

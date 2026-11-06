@@ -1,6 +1,6 @@
 export type PumpId = 'B1' | 'B2';
 export type PumpMode = 'AUTO' | 'MANUAL_ON' | 'MANUAL_OFF';
-export type CommandAction = PumpMode | 'TEST';
+export type CommandAction = PumpMode | 'TEST' | 'RESET_FAULT' | 'IGNORE_FLOAT';
 export type CommandStatus = 'accepted' | 'rejected' | 'expired' | 'completed';
 export type AlertSeverity = 'info' | 'warning' | 'critical';
 
@@ -14,6 +14,9 @@ export interface Telemetry {
   soilMoisturePercent: number | null;
   waterLevel: 'OK' | 'LOW';
   dhtReliable: boolean;
+  soilReliable: boolean;
+  rootReliable: boolean;
+  clockReliable: boolean;
 }
 
 export interface PumpState {
@@ -21,6 +24,9 @@ export interface PumpState {
   mode: PumpMode;
   isOn: boolean;
   expiresAt: string | null;
+  blockedReason: string | null;
+  faultCode: string | null;
+  floatOverrideUntil: string | null;
 }
 
 export interface Alert {
@@ -39,9 +45,21 @@ export interface DeviceEvent {
   id: string;
   deviceId: string;
   occurredAt: string;
-  kind: 'reading' | 'command' | 'alert' | 'mode_change';
+  kind: 'reading' | 'command' | 'alert' | 'mode_change' | 'actuation' | 'configuration' | 'simulation';
   description: string;
   origin: 'simulator' | 'operator' | 'esp32';
+  pumpId?: PumpId;
+  outputOn?: boolean;
+  commandId?: string;
+  commandStatus?: CommandStatus;
+  configVersion?: number;
+  appliedConfig?: Config;
+}
+
+export interface DeviceHistory {
+  telemetry: Telemetry[];
+  events: DeviceEvent[];
+  alerts: Alert[];
 }
 
 export interface Config {
@@ -54,7 +72,20 @@ export interface Config {
   fogPulseSeconds: number;
   fogPauseSeconds: number;
   lowWaterBlocksPumps: true;
+  irrigationMaxSeconds: number;
+  irrigationCooldownMinutes: number;
+  irrigationMaxCyclesPerDay: number;
+  irrigationWindowEnabled: boolean;
+  irrigationWindowStart: string;
+  irrigationWindowEnd: string;
+  irrigationSchedule: IrrigationSchedule[];
+  fogHysteresisC: number;
+  rootAlertTemperatureC: number;
+  manualIrrigationSeconds: number;
+  manualFogSeconds: number;
 }
+
+export interface IrrigationSchedule { time: string; durationSeconds: number; enabled: boolean }
 
 export interface Snapshot {
   deviceId: string;
@@ -65,7 +96,16 @@ export interface Snapshot {
   pumps: Record<PumpId, PumpState>;
   activeAlerts: Alert[];
   config: Config;
+  simulationScenario: SimulationScenario;
+  scenarioControlsEnabled: boolean;
+  configVersion: number;
+  configAppliedAt: string;
+  timeZone: string;
+  irrigationCyclesToday: number;
+  simulationClockOffsetMs: number;
 }
+
+export type SimulationScenario = 'normal' | 'dry_soil' | 'wet_soil' | 'low_water' | 'heat' | 'heat_humid' | 'high_humidity' | 'dht_failure' | 'soil_failure' | 'root_failure' | 'offline' | 'stale' | 'clock_failure' | 'soil_clock_failure' | 'irrigation_failure' | 'fog_failure';
 
 export interface CommandRequest {
   commandId: string;
@@ -73,6 +113,7 @@ export interface CommandRequest {
   action: CommandAction;
   expiresAt: string;
   durationSeconds?: number;
+  supervisionConfirmed?: boolean;
 }
 
 export interface CommandResult extends CommandRequest {
@@ -93,8 +134,3 @@ export interface LoginResponse {
   expiresAt: string;
   username: string;
 }
-
-export interface GoogleChallenge { challengeId: string; nonce: string; expiresAt: string }
-export type GoogleLoginResult = { status: 'authenticated'; session: LoginResponse } |
-  { status: 'not_registered'; requestTicket: string } | { status: 'pending'; requestId: string } |
-  { status: 'link_required' | 'denied' };

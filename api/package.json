@@ -8,17 +8,21 @@
     "hash-password": "node scripts/hash-password.mjs",
     "provision:operator": "tsx scripts/provision-operator.ts",
     "db:check": "tsx scripts/check-db.ts",
-    "db:migrate-google": "tsx scripts/migrate-google.ts",
     "typecheck": "tsc -p tsconfig.check.json",
-    "test:simulator": "node tests/simulator-smoke.mjs",
+    "test:simulator": "node --import tsx tests/simulator-smoke.mjs",
+    "test:dashboard": "node --import tsx --test tests/dashboard.test.ts",
+    "test:control": "node --import tsx --test tests/control.test.ts",
     "test:auth": "node --import tsx --test tests/auth.test.ts",
-    "test:google": "node --import tsx --test tests/google-auth.test.ts",
+    "test:mqtt-contract": "node --import tsx --test tests/mqtt-contract.test.ts",
+    "contract:export": "tsx scripts/export-mqtt-contract.ts",
+    "contract:check": "tsx scripts/export-mqtt-contract.ts --check",
+    "contract:validate": "tsx scripts/validate-mqtt-message.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "ajv": "8.20.0",
     "fastify": "^5.12.4",
-    "google-auth-library": "^11.3.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

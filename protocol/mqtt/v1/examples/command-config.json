@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "type": "command",
+  "deviceId": "bancada-01",
+  "messageId": "00000000-0000-4000-8000-000000000070",
+  "createdAt": "2026-11-06T12:00:00Z",
+  "expiresAt": "2026-11-06T12:00:10Z",
+  "targetBootId": "00000000-0000-4000-8000-000000000001",
+  "targetBootNumber": 1,
+  "targetConnectionId": "00000000-0000-4000-8000-000000000002",
+  "commandId": "cmd-config-20261106-001",
+  "pumpId": null,
+  "action": "APPLY_CONFIG",
+  "durationSeconds": null,
+  "supervisionConfirmed": false,
+  "configVersion": 1,
+  "timeZone": "America/Sao_Paulo",
+  "config": {
+    "soilMinPercent": 60,
+    "soilMaxPercent": 75,
+    "fogTemperatureOnC": 28,
+    "fogHumidityMinPercent": 50,
+    "fogHumidityBlockPercent": 90,
+    "emergencyTemperatureC": 35,
+    "fogPulseSeconds": 60,
+    "fogPauseSeconds": 300,
+    "lowWaterBlocksPumps": true,
+    "irrigationMaxSeconds": 300,
+    "irrigationCooldownMinutes": 10,
+    "irrigationMaxCyclesPerDay": 20,
+    "irrigationWindowEnabled": false,
+    "irrigationWindowStart": "06:00",
+    "irrigationWindowEnd": "17:00",
+    "irrigationSchedule": [
+      {
+        "time": "07:00",
+        "durationSeconds": 60,
+        "enabled": true
+      },
+      {
+        "time": "12:00",
+        "durationSeconds": 60,
+        "enabled": true
+      },
+      {
+        "time": "16:00",
+        "durationSeconds": 60,
+        "enabled": true
+      }
+    ],
+    "fogHysteresisC": 3,
+    "rootAlertTemperatureC": 26,
+    "manualIrrigationSeconds": 120,
+    "manualFogSeconds": 30
+  }
+}

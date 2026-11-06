@@ -2,15 +2,15 @@
 
 Aplicativo React Native com Expo e TypeScript, e API Fastify com TypeScript. A primeira fatia usa uma bancada simulada: Painel, Histórico, Alertas, Controle e limites editáveis.
 
-**Recebeu o projeto para testar no celular Android?** Siga o [guia de execução com Expo Go](GUIA-ANDROID-EXPO-GO.md), incluindo a configuração demo sem PostgreSQL e as instruções para outra IA.
+A [entrega do ambiente integrado](docs/entrega-ambiente-integrado.md) começou pelo [Contrato MQTT v1](docs/contrato-mqtt-v1.md), com [schema e exemplos para o ESP32](protocol/mqtt/v1/README.md). A integração MQTT/PostgreSQL e o ambiente Docker serão implementados nas etapas seguintes; a execução atual do app continua simulada.
 
-O mesmo guia explica o **teste Google no Android**: código mobile/API implementado, banco próprio com a migração Google, credenciais OAuth e development build Android. Expo Go continua disponível para o modo demo e login local. A aprovação de novas contas permanece pendente.
+**Recebeu o projeto para testar no celular Android?** Siga o [guia de execução com Expo Go](GUIA-ANDROID-EXPO-GO.md), incluindo a configuração demo sem PostgreSQL e as instruções para outra IA.
 
 ## Requisitos
 
 - Node.js 24.x (24.3.0 ou superior) ou 22.x (22.13.0 ou superior)
 - npm
-- Expo Go no celular ou um emulador Android configurado
+- Expo Go compatível com SDK 58 no celular ou um emulador Android configurado
 
 No PowerShell desta máquina, use `npm.cmd` porque a execução de `npm.ps1` está desabilitada.
 
@@ -46,12 +46,13 @@ npm.cmd run check
 npm.cmd run build:api
 npm.cmd run test:simulator -w api
 npm.cmd run test:auth -w api
-npm.cmd run test:google -w api
 ```
 
-As dependências precisam ser instaladas antes de executar os comandos acima. O app foi validado com Expo SDK 57 e o bundle iOS foi gerado. O SDK Android não foi encontrado neste computador; Expo Go em um aparelho físico pode ser usado sem ele.
+As dependências precisam ser instaladas antes de executar os comandos acima. O mobile usa Expo SDK 58, React Native 0.88 e React 19.3. Veja a [validação da migração](docs/validacao-expo-sdk58.md). O SDK Android não foi encontrado neste computador; Expo Go em um aparelho físico pode ser usado sem ele.
 
 As [decisões aprovadas](docs/decisoes-aprovadas.md) e a [arquitetura](docs/arquitetura-proposta.md) orientam a integração com PostgreSQL, MQTT e ESP32. A API usa autenticação persistente quando conectada ao banco; dados e comandos do simulador continuam em memória. O ambiente atual é de desenvolvimento.
+
+O [Painel da estufa com cenários simulados](docs/painel-simulado.md) permite testar leituras, controles temporizados, alertas e falhas diretamente no app. Use **Controle → Testar sem a estufa** para escolher cenários de desenvolvimento. O [menu Controle simulado](docs/controle-simulado.md) inclui parâmetros por sensores, janela, agenda de reserva, duração manual, testes e avanço do relógio sem depender da estufa. O [Histórico e Alertas](docs/historico-alertas-simulados.md) separa os registros por categoria e mantém apenas condições ativas no menu Alertas.
 
 ## Modelo de banco
 

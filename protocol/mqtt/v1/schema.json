@@ -1,0 +1,2290 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:pievi:mqtt:1",
+  "title": "PIEVI MQTT v1",
+  "description": "Payloads somente. As regras semânticas, de identidade e sessão estão em docs/contrato-mqtt-v1.md e protocol.ts.",
+  "definitions": {
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "telemetry"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "bootId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "bootNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "connectionId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "messageId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "uptimeMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "clockReliable": {
+          "type": "boolean"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "airTemperatureC": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 60,
+              "multipleOf": 0.1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "airHumidityPercent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "multipleOf": 0.1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "substrateTemperatureC": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 60,
+              "multipleOf": 0.1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "soilMoisturePercent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "multipleOf": 0.1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "soilMoistureAdc": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "waterLevel": {
+          "enum": [
+            "OK",
+            "LOW"
+          ]
+        },
+        "dhtReliable": {
+          "type": "boolean"
+        },
+        "soilReliable": {
+          "type": "boolean"
+        },
+        "rootReliable": {
+          "type": "boolean"
+        },
+        "activeCalibrationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "bootId",
+        "bootNumber",
+        "connectionId",
+        "sequence",
+        "messageId",
+        "uptimeMs",
+        "clockReliable",
+        "occurredAt",
+        "airTemperatureC",
+        "airHumidityPercent",
+        "substrateTemperatureC",
+        "soilMoisturePercent",
+        "soilMoistureAdc",
+        "waterLevel",
+        "dhtReliable",
+        "soilReliable",
+        "rootReliable",
+        "activeCalibrationId"
+      ]
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "state"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "bootId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "bootNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "connectionId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "messageId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "uptimeMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "clockReliable": {
+          "type": "boolean"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "syncId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "activeConfigVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "firmwareVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "droppedMessages": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "pumps": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "B1": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "AUTO",
+                    "MANUAL_ON",
+                    "MANUAL_OFF"
+                  ]
+                },
+                "isOn": {
+                  "type": "boolean"
+                },
+                "fsmState": {
+                  "enum": [
+                    "IDLE",
+                    "RUNNING",
+                    "PAUSED",
+                    "MANUAL_ON",
+                    "MANUAL_OFF",
+                    "BLOCKED",
+                    "FAULT"
+                  ]
+                },
+                "modeStartedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "expiresAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "remainingSeconds": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3600
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "blockedReason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "faultCode": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "IRRIG_FALHA",
+                        "NEVOA_FALHA",
+                        "BOMBA_PRESA"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "floatOverrideUntil": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "feedback": {
+                  "enum": [
+                    "relay_output",
+                    "independent_sensor"
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "isOn",
+                "fsmState",
+                "modeStartedAt",
+                "expiresAt",
+                "remainingSeconds",
+                "blockedReason",
+                "faultCode",
+                "floatOverrideUntil",
+                "feedback"
+              ]
+            },
+            "B2": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "AUTO",
+                    "MANUAL_ON",
+                    "MANUAL_OFF"
+                  ]
+                },
+                "isOn": {
+                  "type": "boolean"
+                },
+                "fsmState": {
+                  "enum": [
+                    "IDLE",
+                    "RUNNING",
+                    "PAUSED",
+                    "MANUAL_ON",
+                    "MANUAL_OFF",
+                    "BLOCKED",
+                    "FAULT"
+                  ]
+                },
+                "modeStartedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "expiresAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "remainingSeconds": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3600
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "blockedReason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "faultCode": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "IRRIG_FALHA",
+                        "NEVOA_FALHA",
+                        "BOMBA_PRESA"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "floatOverrideUntil": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "feedback": {
+                  "enum": [
+                    "relay_output",
+                    "independent_sensor"
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "isOn",
+                "fsmState",
+                "modeStartedAt",
+                "expiresAt",
+                "remainingSeconds",
+                "blockedReason",
+                "faultCode",
+                "floatOverrideUntil",
+                "feedback"
+              ]
+            }
+          },
+          "required": [
+            "B1",
+            "B2"
+          ]
+        },
+        "activeAlerts": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "episodeId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "code": {
+                "enum": [
+                  "NIVEL_BAIXO",
+                  "TEMP_RAIZ_ALTA",
+                  "CALOR_EMERG",
+                  "GEADA",
+                  "UR_ALTA",
+                  "DHT_FALHA",
+                  "DS18_FALHA",
+                  "SOLO_FALHA",
+                  "BOIA_SUSPEITA",
+                  "IRRIG_FALHA",
+                  "NEVOA_FALHA",
+                  "BICO_ENTUPIDO",
+                  "VAZAMENTO_SUSPEITO",
+                  "BOMBA_PRESA",
+                  "BOMBA_TEMPO_EXCEDIDO",
+                  "REINICIO",
+                  "HORA_INVALIDA",
+                  "CONFIG_INVALIDA",
+                  "MODO_MANUAL"
+                ]
+              },
+              "pumpId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "B1",
+                      "B2"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "severity": {
+                "enum": [
+                  "info",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "startedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "episodeId",
+              "code",
+              "pumpId",
+              "severity",
+              "startedAt",
+              "detail"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "bootId",
+        "bootNumber",
+        "connectionId",
+        "sequence",
+        "messageId",
+        "uptimeMs",
+        "clockReliable",
+        "occurredAt",
+        "syncId",
+        "activeConfigVersion",
+        "firmwareVersion",
+        "droppedMessages",
+        "pumps",
+        "activeAlerts"
+      ]
+    },
+    "events": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "event"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "bootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "bootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "connectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "messageId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "uptimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "clockReliable": {
+              "type": "boolean"
+            },
+            "occurredAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "eventType": {
+              "const": "cycle"
+            },
+            "phase": {
+              "enum": [
+                "started",
+                "finished"
+              ]
+            },
+            "cycleId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "source": {
+              "enum": [
+                "auto",
+                "manual",
+                "fallback",
+                "emergency",
+                "test"
+              ]
+            },
+            "commandId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 8,
+                  "maxLength": 100,
+                  "pattern": "^[A-Za-z0-9:_-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "startedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "endedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "elapsedSeconds": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "measurementsBefore": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "airTemperatureC": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": -10,
+                      "maximum": 60,
+                      "multipleOf": 0.1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "airHumidityPercent": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "multipleOf": 0.1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "soilMoisturePercent": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "multipleOf": 0.1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "airTemperatureC",
+                "airHumidityPercent",
+                "soilMoisturePercent"
+              ]
+            },
+            "measurementsAfter": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "airTemperatureC": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": -10,
+                          "maximum": 60,
+                          "multipleOf": 0.1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "airHumidityPercent": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100,
+                          "multipleOf": 0.1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "soilMoisturePercent": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100,
+                          "multipleOf": 0.1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "airTemperatureC",
+                    "airHumidityPercent",
+                    "soilMoisturePercent"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "bootId",
+            "bootNumber",
+            "connectionId",
+            "sequence",
+            "messageId",
+            "uptimeMs",
+            "clockReliable",
+            "occurredAt",
+            "eventType",
+            "phase",
+            "cycleId",
+            "pumpId",
+            "source",
+            "commandId",
+            "reason",
+            "startedAt",
+            "endedAt",
+            "elapsedSeconds",
+            "measurementsBefore",
+            "measurementsAfter"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "event"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "bootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "bootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "connectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "messageId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "uptimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "clockReliable": {
+              "type": "boolean"
+            },
+            "occurredAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "eventType": {
+              "const": "alert"
+            },
+            "phase": {
+              "enum": [
+                "opened",
+                "updated",
+                "resolved"
+              ]
+            },
+            "episodeId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "code": {
+              "enum": [
+                "NIVEL_BAIXO",
+                "TEMP_RAIZ_ALTA",
+                "CALOR_EMERG",
+                "GEADA",
+                "UR_ALTA",
+                "DHT_FALHA",
+                "DS18_FALHA",
+                "SOLO_FALHA",
+                "BOIA_SUSPEITA",
+                "IRRIG_FALHA",
+                "NEVOA_FALHA",
+                "BICO_ENTUPIDO",
+                "VAZAMENTO_SUSPEITO",
+                "BOMBA_PRESA",
+                "BOMBA_TEMPO_EXCEDIDO",
+                "REINICIO",
+                "HORA_INVALIDA",
+                "CONFIG_INVALIDA",
+                "MODO_MANUAL"
+              ]
+            },
+            "pumpId": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "B1",
+                    "B2"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "severity": {
+              "enum": [
+                "info",
+                "warning",
+                "critical"
+              ]
+            },
+            "startedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "detail": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "endedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "bootId",
+            "bootNumber",
+            "connectionId",
+            "sequence",
+            "messageId",
+            "uptimeMs",
+            "clockReliable",
+            "occurredAt",
+            "eventType",
+            "phase",
+            "episodeId",
+            "code",
+            "pumpId",
+            "severity",
+            "startedAt",
+            "detail",
+            "endedAt"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "event"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "bootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "bootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "connectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "messageId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "uptimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "clockReliable": {
+              "type": "boolean"
+            },
+            "occurredAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "eventType": {
+              "const": "fsm_transition"
+            },
+            "machine": {
+              "enum": [
+                "irrigation",
+                "fog",
+                "substrate"
+              ]
+            },
+            "fromState": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "IDLE",
+                    "RUNNING",
+                    "PAUSED",
+                    "MANUAL_ON",
+                    "MANUAL_OFF",
+                    "BLOCKED",
+                    "FAULT",
+                    "NORMAL",
+                    "HIGH",
+                    "SENSOR_FAULT"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "toState": {
+              "enum": [
+                "IDLE",
+                "RUNNING",
+                "PAUSED",
+                "MANUAL_ON",
+                "MANUAL_OFF",
+                "BLOCKED",
+                "FAULT",
+                "NORMAL",
+                "HIGH",
+                "SENSOR_FAULT"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "bootId",
+            "bootNumber",
+            "connectionId",
+            "sequence",
+            "messageId",
+            "uptimeMs",
+            "clockReliable",
+            "occurredAt",
+            "eventType",
+            "machine",
+            "fromState",
+            "toState",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "event"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "bootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "bootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "connectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "messageId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "uptimeMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "clockReliable": {
+              "type": "boolean"
+            },
+            "occurredAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "eventType": {
+              "const": "calibration"
+            },
+            "calibrationId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "adcDry": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            },
+            "adcWater": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "bootId",
+            "bootNumber",
+            "connectionId",
+            "sequence",
+            "messageId",
+            "uptimeMs",
+            "clockReliable",
+            "occurredAt",
+            "eventType",
+            "calibrationId",
+            "adcDry",
+            "adcWater"
+          ]
+        }
+      ]
+    },
+    "acks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "ack"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "bootId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "bootNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "connectionId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "messageId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "uptimeMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "clockReliable": {
+          "type": "boolean"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "commandId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "pattern": "^[A-Za-z0-9:_-]+$"
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "rejected",
+            "completed"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "appliedConfigVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "bootId",
+        "bootNumber",
+        "connectionId",
+        "sequence",
+        "messageId",
+        "uptimeMs",
+        "clockReliable",
+        "occurredAt",
+        "commandId",
+        "status",
+        "reason",
+        "appliedConfigVersion"
+      ]
+    },
+    "presence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "presence"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "bootId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "bootNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "connectionId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "online": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "bootId",
+        "bootNumber",
+        "connectionId",
+        "online"
+      ]
+    },
+    "commands": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "MANUAL_ON"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 300
+            },
+            "supervisionConfirmed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "MANUAL_OFF"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "const": 3600
+            },
+            "supervisionConfirmed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "TEST"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "const": 10
+            },
+            "supervisionConfirmed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "AUTO"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "type": "null"
+            },
+            "supervisionConfirmed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "RESET_FAULT"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "type": "null"
+            },
+            "supervisionConfirmed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "IGNORE_FLOAT"
+            },
+            "pumpId": {
+              "enum": [
+                "B1",
+                "B2"
+              ]
+            },
+            "durationSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120
+            },
+            "supervisionConfirmed": {
+              "const": true
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": 1
+            },
+            "type": {
+              "const": "command"
+            },
+            "deviceId": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+            },
+            "messageId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "targetBootId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "targetBootNumber": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "targetConnectionId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "action": {
+              "const": "APPLY_CONFIG"
+            },
+            "pumpId": {
+              "type": "null"
+            },
+            "durationSeconds": {
+              "type": "null"
+            },
+            "supervisionConfirmed": {
+              "const": false
+            },
+            "configVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "timeZone": {
+              "const": "America/Sao_Paulo"
+            },
+            "config": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "soilMinPercent": {
+                  "type": "number",
+                  "minimum": 30,
+                  "maximum": 80
+                },
+                "soilMaxPercent": {
+                  "type": "number",
+                  "minimum": 50,
+                  "maximum": 95
+                },
+                "irrigationMaxSeconds": {
+                  "type": "integer",
+                  "minimum": 30,
+                  "maximum": 300
+                },
+                "irrigationCooldownMinutes": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 30
+                },
+                "irrigationMaxCyclesPerDay": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 40
+                },
+                "fogTemperatureOnC": {
+                  "type": "number",
+                  "minimum": 22,
+                  "maximum": 40
+                },
+                "fogHysteresisC": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 6
+                },
+                "fogHumidityMinPercent": {
+                  "type": "number",
+                  "minimum": 30,
+                  "maximum": 70
+                },
+                "fogHumidityBlockPercent": {
+                  "type": "number",
+                  "minimum": 80,
+                  "maximum": 98
+                },
+                "fogPulseSeconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 60
+                },
+                "fogPauseSeconds": {
+                  "type": "integer",
+                  "minimum": 60,
+                  "maximum": 1800,
+                  "multipleOf": 60
+                },
+                "emergencyTemperatureC": {
+                  "type": "number",
+                  "minimum": 30,
+                  "maximum": 45
+                },
+                "rootAlertTemperatureC": {
+                  "type": "number",
+                  "minimum": 20,
+                  "maximum": 35
+                },
+                "manualIrrigationSeconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 300
+                },
+                "manualFogSeconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 60
+                },
+                "lowWaterBlocksPumps": {
+                  "const": true
+                },
+                "irrigationWindowEnabled": {
+                  "type": "boolean"
+                },
+                "irrigationWindowStart": {
+                  "type": "string",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "irrigationWindowEnd": {
+                  "type": "string",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "irrigationSchedule": {
+                  "type": "array",
+                  "maxItems": 24,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                      },
+                      "durationSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 300
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "time",
+                      "durationSeconds",
+                      "enabled"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "soilMinPercent",
+                "soilMaxPercent",
+                "irrigationMaxSeconds",
+                "irrigationCooldownMinutes",
+                "irrigationMaxCyclesPerDay",
+                "fogTemperatureOnC",
+                "fogHysteresisC",
+                "fogHumidityMinPercent",
+                "fogHumidityBlockPercent",
+                "fogPulseSeconds",
+                "fogPauseSeconds",
+                "emergencyTemperatureC",
+                "rootAlertTemperatureC",
+                "manualIrrigationSeconds",
+                "manualFogSeconds",
+                "lowWaterBlocksPumps",
+                "irrigationWindowEnabled",
+                "irrigationWindowStart",
+                "irrigationWindowEnd",
+                "irrigationSchedule"
+              ]
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "type",
+            "deviceId",
+            "messageId",
+            "createdAt",
+            "expiresAt",
+            "targetBootId",
+            "targetBootNumber",
+            "targetConnectionId",
+            "commandId",
+            "action",
+            "pumpId",
+            "durationSeconds",
+            "supervisionConfirmed",
+            "configVersion",
+            "timeZone",
+            "config"
+          ]
+        }
+      ]
+    },
+    "sync": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "sync"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "messageId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+        },
+        "syncId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "messageId",
+        "createdAt",
+        "expiresAt",
+        "syncId"
+      ]
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "type": {
+          "const": "receipt"
+        },
+        "deviceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+        },
+        "messageId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sourceMessageId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "sourceBootId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sourceBootNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "status": {
+          "enum": [
+            "stored",
+            "duplicate",
+            "rejected"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "type",
+        "deviceId",
+        "messageId",
+        "sourceMessageId",
+        "sourceBootId",
+        "sourceBootNumber",
+        "status",
+        "reason",
+        "processedAt"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/telemetry"
+    },
+    {
+      "$ref": "#/definitions/state"
+    },
+    {
+      "$ref": "#/definitions/events"
+    },
+    {
+      "$ref": "#/definitions/acks"
+    },
+    {
+      "$ref": "#/definitions/presence"
+    },
+    {
+      "$ref": "#/definitions/commands"
+    },
+    {
+      "$ref": "#/definitions/sync"
+    },
+    {
+      "$ref": "#/definitions/receipts"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "type": "event",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 11,
+  "messageId": "00000000-0000-4000-8000-000000000001:11",
+  "uptimeMs": 71000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:02:01Z",
+  "eventType": "cycle",
+  "cycleId": "00000000-0000-4000-8000-000000000040",
+  "pumpId": "B1",
+  "source": "manual",
+  "commandId": "cmd-b1-20261106-001",
+  "reason": "Pedido manual validado.",
+  "startedAt": "2026-11-06T12:00:01Z",
+  "endedAt": "2026-11-06T12:02:01Z",
+  "elapsedSeconds": 120,
+  "measurementsBefore": {
+    "airTemperatureC": 28.4,
+    "airHumidityPercent": 62.1,
+    "soilMoisturePercent": 66.5
+  },
+  "measurementsAfter": {
+    "airTemperatureC": 28.4,
+    "airHumidityPercent": 62.1,
+    "soilMoisturePercent": 73.2
+  },
+  "phase": "finished"
+}

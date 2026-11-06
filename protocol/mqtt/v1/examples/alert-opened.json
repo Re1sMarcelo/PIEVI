@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "type": "event",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 13,
+  "messageId": "00000000-0000-4000-8000-000000000001:13",
+  "uptimeMs": 73000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:00:01Z",
+  "eventType": "alert",
+  "phase": "opened",
+  "episodeId": "00000000-0000-4000-8000-000000000030",
+  "code": "NIVEL_BAIXO",
+  "pumpId": null,
+  "severity": "critical",
+  "startedAt": "2026-11-06T12:00:01Z",
+  "detail": "Boia indica nível baixo ou circuito aberto.",
+  "endedAt": null
+}

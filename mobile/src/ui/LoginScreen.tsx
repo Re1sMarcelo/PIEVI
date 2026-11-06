@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable,
   ScrollView, StyleSheet, Text, TextInput, View,
+  type TextInputInstance,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
@@ -18,12 +19,11 @@ interface Props {
   onUsernameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: () => void;
-  onGoogleLogin: () => void;
 }
 
 export function LoginScreen(props: Props) {
   const insets = useSafeAreaInsets();
-  const passwordInput = useRef<TextInput>(null);
+  const passwordInput = useRef<TextInputInstance>(null);
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState<'username' | 'password' | null>(null);
 
@@ -87,10 +87,6 @@ export function LoginScreen(props: Props) {
             </LinearGradient>
           </Pressable>
 
-          <Pressable onPress={props.onGoogleLogin} disabled={props.busy} accessibilityRole="button" accessibilityLabel="Continuar com Google" style={styles.googleButton}>
-            <Text style={styles.googleMark} accessibilityElementsHidden>G</Text><Text style={styles.googleText}>Continuar com Google</Text>
-          </Pressable>
-
           <View style={styles.signupRow}>
             <View style={styles.rule} />
             <View style={styles.signupTextWrap}>
@@ -131,9 +127,6 @@ const styles = StyleSheet.create({
   submit: { borderRadius: 10, overflow: 'hidden', marginTop: 4, shadowColor: colors.greenDark, shadowOpacity: 0.12, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8 },
   submitFill: { minHeight: 48, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 9 },
   submitText: { color: 'white', fontSize: 17, fontWeight: '700' },
-  googleButton:{minHeight:48,marginTop:12,borderWidth:1,borderColor:'#c7cdd2',borderRadius:10,flexDirection:'row',gap:12,alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},
-  googleMark:{fontSize:23,fontWeight:'700',color:'#4285f4'},
-  googleText:{fontSize:15,fontWeight:'600',color:colors.ink},
   signupRow: { flexDirection: 'row', alignItems: 'center', gap: 11, marginTop: 24, marginBottom: 3 },
   rule: { flex: 1, height: 1, backgroundColor: '#d4dbdc', minWidth: 10 },
   signupTextWrap: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', flexShrink: 1 },

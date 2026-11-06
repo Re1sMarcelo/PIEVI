@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "type": "receipt",
+  "deviceId": "bancada-01",
+  "messageId": "00000000-0000-4000-8000-000000000053",
+  "sourceMessageId": "00000000-0000-4000-8000-000000000001:1",
+  "sourceBootId": "00000000-0000-4000-8000-000000000001",
+  "sourceBootNumber": 1,
+  "status": "duplicate",
+  "reason": null,
+  "processedAt": "2026-11-06T12:00:03Z"
+}

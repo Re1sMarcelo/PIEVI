@@ -8,8 +8,7 @@
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-secure-store",
-      "expo-status-bar",
-      "expo-dev-client"
+      "expo-status-bar"
     ],
     "android": {
       "package": "com.pievi.mobile.dev"

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "type": "state",
+  "deviceId": "bancada-01",
+  "bootId": "00000000-0000-4000-8000-000000000001",
+  "bootNumber": 1,
+  "connectionId": "00000000-0000-4000-8000-000000000002",
+  "sequence": 5,
+  "messageId": "00000000-0000-4000-8000-000000000001:5",
+  "uptimeMs": 65000,
+  "clockReliable": true,
+  "occurredAt": "2026-11-06T12:00:01Z",
+  "syncId": null,
+  "activeConfigVersion": 1,
+  "firmwareVersion": "esp32-dev-1.0.0",
+  "droppedMessages": 0,
+  "pumps": {
+    "B1": {
+      "mode": "AUTO",
+      "isOn": false,
+      "fsmState": "BLOCKED",
+      "modeStartedAt": null,
+      "expiresAt": null,
+      "remainingSeconds": null,
+      "blockedReason": "Nível baixo",
+      "faultCode": null,
+      "floatOverrideUntil": null,
+      "feedback": "relay_output"
+    },
+    "B2": {
+      "mode": "AUTO",
+      "isOn": false,
+      "fsmState": "BLOCKED",
+      "modeStartedAt": null,
+      "expiresAt": null,
+      "remainingSeconds": null,
+      "blockedReason": "Nível baixo",
+      "faultCode": null,
+      "floatOverrideUntil": null,
+      "feedback": "relay_output"
+    }
+  },
+  "activeAlerts": [
+    {
+      "episodeId": "00000000-0000-4000-8000-000000000030",
+      "code": "NIVEL_BAIXO",
+      "pumpId": null,
+      "severity": "critical",
+      "startedAt": "2026-11-06T12:00:01Z",
+      "detail": "Boia indica nível baixo ou circuito aberto."
+    }
+  ]
+}

@@ -14,7 +14,7 @@
     "test:db": "node --test db/tests/schema.test.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": "^22.13.0 || ^24.3.0 || >=26.0.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11"
