@@ -2,6 +2,8 @@
 
 Guia para o colega que recebeu o projeto e para a IA que vai ajudá-lo. Atualizado para Expo SDK 58 em 23/10/2026.
 
+**Atualização de 09/11/2026:** o [guia do ambiente integrado](docs/ambiente-integrado.md) também permite executar MQTT e dados persistidos com laboratório local ou Docker Compose. O roteiro abaixo continua dedicado ao teste simples em memória com `demo` / `demo`; as credenciais dos outros modos são diferentes.
+
 ## O que este guia executa
 
 O app atual funciona no **Expo Go para Android**, sem gerar APK, instalar Android Studio ou preparar development build. Você verá login, Painel, Histórico, Alertas e Controle de uma **bancada simulada**.

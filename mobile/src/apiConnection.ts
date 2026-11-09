@@ -24,7 +24,7 @@ export async function requestJson<T>(url: string, token?: string, options: Reque
       ...options,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body===undefined ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },

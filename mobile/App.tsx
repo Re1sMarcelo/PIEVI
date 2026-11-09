@@ -163,14 +163,14 @@ function AppContent() {
     setNotice('');
     try {
       const duration = requestedDuration ?? (action === 'MANUAL_ON' ? (pumpId === 'B1' ? snapshot?.config.manualIrrigationSeconds ?? 120 : snapshot?.config.manualFogSeconds ?? 30) : undefined);
-      await api.command(token, pumpId, action, duration, supervisionConfirmed, snapshot?.simulationClockOffsetMs ?? 0);
+      const result=await api.command(token, pumpId, action, duration, supervisionConfirmed, snapshot?.simulationClockOffsetMs ?? 0);
       if (activeSession.current !== token) return false;
       refreshRevision.current++;
       const observed = await api.snapshot(token);
       if (activeSession.current !== token) return false;
       setSnapshot(observed);
       // The live actuator card is the command feedback; avoid leaving a stale global toast on screen.
-      setNotice('');
+      setNotice(observed.mode && observed.mode!=='simulator' && result.status==='accepted' ? 'Comando aceito pelo ESP. O estado da saída será atualizado após a confirmação.' : '');
       await refresh(token);
       return true;
     } catch (caught) {
@@ -189,7 +189,7 @@ function AppContent() {
       if (activeSession.current !== token) return;
       refreshRevision.current++;
       setSnapshot(next);
-      setNotice('Cenário aplicado à bancada simulada. B1 e B2 retornaram para AUTO.');
+      setNotice(next.mode==='mqtt-virtual' ? 'Cenário enviado ao ESP virtual. Aguarde as novas leituras pelo MQTT.' : 'Cenário aplicado à bancada simulada. B1 e B2 retornaram para AUTO.');
       await refresh(token);
     } catch (caught) {
       if (activeSession.current === token) setError(caught instanceof Error ? caught.message : 'Não foi possível aplicar o cenário.');
@@ -224,7 +224,7 @@ function AppContent() {
       const observed = await api.snapshot(token);
       if (activeSession.current !== token) return false;
       setSnapshot(observed);
-      setNotice(`Configuração v${observed.configVersion} confirmada e aplicada pelo simulador.`);
+      setNotice(`Configuração v${observed.configVersion} confirmada e aplicada pelo ${observed.mode && observed.mode!=='simulator' ? 'ESP' : 'simulador'}.`);
       await refresh(token);
       return true;
     } catch (caught) {
@@ -274,7 +274,7 @@ function AppContent() {
         {!!notice && <Text style={styles.notice}>{notice}</Text>}
         {!snapshot && <View style={styles.loading}>{!error && <ActivityIndicator size="large" color={colors.green} />}<Text style={styles.helper}>{error ? 'Não foi possível carregar sua estufa.' : 'Carregando sua estufa…'}</Text>{!!error && <Action label="Tentar novamente" onPress={() => { void refresh(token); }} />}</View>}
         {snapshot && tab === 'Painel' && <Dashboard snapshot={snapshot} connected={connected} clock={deviceClock} telemetry={history?.telemetry ?? []} busy={busy} feedback={error || notice} onNavigate={navigate} onCommand={sendCommand} onAcknowledge={acknowledge} />}
-        {snapshot && tab === 'Histórico' && <HistoryScreen data={history} clock={deviceClock} timeZone={snapshot.timeZone} connected={connected} />}
+        {snapshot && tab === 'Histórico' && <HistoryScreen data={history} clock={deviceClock} timeZone={snapshot.timeZone} connected={connected} persistent={!!snapshot.mode && snapshot.mode!=='simulator'} />}
         {snapshot && tab === 'Alertas' && <AlertsScreen snapshot={snapshot} connected={connected} clock={deviceClock} busy={busy} feedback={error || notice} onAcknowledge={acknowledge} />}
         {snapshot && <View style={tab === 'Controle' ? undefined : { display: 'none' }}><ControlScreen snapshot={snapshot} connected={connected} clock={deviceClock} busy={busy} active={tab === 'Controle'} feedback={error || notice} onCommand={sendCommand} onSave={saveConfig} onScenario={changeScenario} onAdvance={advanceSimulation} /></View>}
       </ScrollView>

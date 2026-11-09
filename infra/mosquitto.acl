@@ -1,0 +1,19 @@
+user api-local
+topic read pievi/v1/devices/bancada-01/telemetry
+topic read pievi/v1/devices/bancada-01/state
+topic read pievi/v1/devices/bancada-01/events
+topic read pievi/v1/devices/bancada-01/acks
+topic read pievi/v1/devices/bancada-01/presence
+topic write pievi/v1/devices/bancada-01/commands
+topic write pievi/v1/devices/bancada-01/sync
+topic write pievi/v1/devices/bancada-01/receipts
+
+user bancada-01
+topic write pievi/v1/devices/bancada-01/telemetry
+topic write pievi/v1/devices/bancada-01/state
+topic write pievi/v1/devices/bancada-01/events
+topic write pievi/v1/devices/bancada-01/acks
+topic write pievi/v1/devices/bancada-01/presence
+topic read pievi/v1/devices/bancada-01/commands
+topic read pievi/v1/devices/bancada-01/sync
+topic read pievi/v1/devices/bancada-01/receipts

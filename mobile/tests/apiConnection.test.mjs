@@ -1,9 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ApiError, requestJson, resolveApiBaseUrl } from '../src/apiConnection.ts';
+import {createServer} from 'node:http';
 
 test('endereço configurado tem prioridade, inclusive no navegador', () => {
   assert.equal(resolveApiBaseUrl(' https://api.example.com/ ', '192.168.1.10:8081', true), 'https://api.example.com');
+});
+
+test('POST sem corpo funciona em servidor que recusa JSON vazio',async()=>{
+  const server=createServer((request,response)=>{
+    let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{
+      const invalid=request.headers['content-type']==='application/json' && !body;
+      response.writeHead(invalid ? 400 : 200,{'Content-Type':'application/json'});response.end(JSON.stringify(invalid ? {error:'JSON vazio'} : {ok:true}));
+    });
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{assert.deepEqual(await requestJson(`http://127.0.0.1:${server.address().port}/ack`,'token',{method:'POST'}),{ok:true});}
+  finally{await new Promise(resolve=>server.close(resolve));}
 });
 
 test('rede local usa a API na porta 3000 e navegador usa o proxy', () => {

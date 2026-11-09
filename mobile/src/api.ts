@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { requestJson, resolveApiBaseUrl } from './apiConnection';
+import { waitForCommand } from './commandPolling';
 export { ApiError } from './apiConnection';
 import type {
   Alert,
@@ -15,6 +16,7 @@ import type {
   Snapshot,
   Telemetry,
   SimulationScenario,
+  ConfigSubmission,
 } from '../../api/src/contracts';
 
 export function getApiBaseUrl() {
@@ -44,14 +46,25 @@ export const api = {
   events: (token: string) => request<ListResponse<DeviceEvent>>(`${devicePath}/events`, token),
   alerts: (token: string) => request<ListResponse<Alert>>(`${devicePath}/alerts`, token),
   acknowledge: (token: string, id: string) => request<Alert>(`${devicePath}/alerts/${id}/ack`, token, { method: 'POST' }),
-  updateConfig: (token: string, config: Partial<Config>, expectedVersion?: number) => request<Config>(`${devicePath}/config`, token, {
-    method: 'PUT', body: JSON.stringify(config), headers: expectedVersion === undefined ? {} : { 'If-Match': `"${expectedVersion}"` },
-  }),
-  command: (token: string, pumpId: PumpId, action: CommandAction, durationSeconds?: number, supervisionConfirmed?: boolean, clockOffsetMs = 0) => {
+  updateConfig: async (token: string, config: Partial<Config>, expectedVersion?: number) => {
+    const result=await request<Config|ConfigSubmission>(`${devicePath}/config`, token, {
+      method: 'PUT', body: JSON.stringify(config), headers: expectedVersion === undefined ? {} : { 'If-Match': `"${expectedVersion}"` },
+    });
+    if(!('commandId' in result))return result;
+    await waitForCommand(()=>request<CommandResult>(`${devicePath}/commands/${result.commandId}`,token),'completed');
+    for(let attempt=0;attempt<20;attempt++) {
+      const snapshot=await request<Snapshot>(`${devicePath}/snapshot`,token);
+      if(snapshot.configApplied && snapshot.configVersion===result.requestedVersion)return snapshot.config;
+      await new Promise(resolve=>setTimeout(resolve,200));
+    }
+    throw new Error('O ESP confirmou a configuração, mas o estado aplicado ainda não foi reconciliado. Atualize antes de reenviar.');
+  },
+  command: async (token: string, pumpId: PumpId, action: CommandAction, durationSeconds?: number, supervisionConfirmed?: boolean, clockOffsetMs = 0) => {
     const commandId = `${Date.now()}-${Math.random().toString(36).slice(2)}-${pumpId}`;
-    return request<CommandResult>(`${devicePath}/commands`, token, {
+    const result=await request<CommandResult>(`${devicePath}/commands`, token, {
       method: 'POST',
       body: JSON.stringify({ commandId, pumpId, action, durationSeconds, supervisionConfirmed, expiresAt: new Date(Date.now() + clockOffsetMs + 10_000).toISOString() }),
     });
+    return result.status==='pending'||result.status==='sent' ? waitForCommand(()=>request<CommandResult>(`${devicePath}/commands/${commandId}`,token),'accepted') : result;
   },
 };

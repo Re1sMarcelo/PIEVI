@@ -1,0 +1,144 @@
+name: pievi
+
+x-app: &app
+  image: pievi-local:dev
+  init: true
+
+x-database: &database
+  DATABASE_URL: postgresql://pievi:${POSTGRES_PASSWORD:?Execute npm run setup:compose}@postgres:5432/pievi
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: pievi
+      POSTGRES_DB: pievi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Execute npm run setup:compose}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./db/002_catalogo_alertas.sql:/docker-entrypoint-initdb.d/002_catalogo_alertas.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U pievi -d pievi']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  broker-init:
+    image: eclipse-mosquitto:2
+    user: '0:0'
+    environment:
+      MQTT_API_PASSWORD: ${MQTT_API_PASSWORD:?Execute npm run setup:compose}
+      MQTT_ESP_PASSWORD: ${MQTT_ESP_PASSWORD:?Execute npm run setup:compose}
+    volumes:
+      - broker-credentials:/credentials
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        credential_dir=$$(mktemp -d /credentials/init.XXXXXX)
+        mosquitto_passwd -c -b "$$credential_dir/passwords" api-local "$$MQTT_API_PASSWORD"
+        mosquitto_passwd -b "$$credential_dir/passwords" bancada-01 "$$MQTT_ESP_PASSWORD"
+        chown 1883:1883 "$$credential_dir/passwords"
+        chmod 600 "$$credential_dir/passwords"
+        mv -f "$$credential_dir/passwords" /credentials/passwords
+        rmdir "$$credential_dir"
+
+  broker:
+    image: eclipse-mosquitto:2
+    user: '1883:1883'
+    depends_on:
+      broker-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./infra/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./infra/mosquitto.acl:/mosquitto/config/acl:ro
+      - broker-credentials:/credentials:ro
+    ports:
+      - '127.0.0.1:${MQTT_PORT:-1883}:1883'
+    environment:
+      MQTT_API_PASSWORD: ${MQTT_API_PASSWORD}
+    healthcheck:
+      test: [CMD-SHELL, 'mosquitto_sub -h 127.0.0.1 -u api-local -P "$$MQTT_API_PASSWORD" -t pievi/v1/devices/bancada-01/presence -E']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  bootstrap:
+    <<: *app
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *database
+      PIEVI_COMPOSE_SETUP: '1'
+      OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operador}
+      OPERATOR_PASSWORD_HASH: ${OPERATOR_PASSWORD_HASH:?Execute npm run setup:compose}
+    command: [node, --import, tsx, scripts/bootstrap-compose.ts]
+
+  api:
+    <<: *app
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      broker:
+        condition: service_healthy
+    environment:
+      <<: *database
+      PORT: '3000'
+      PIEVI_DEVICE_MODE: mqtt
+      MQTT_DEVICE_KIND: virtual
+      DEVICE_ID: bancada-01
+      MQTT_URL: mqtt://broker:1883
+      MQTT_API_USERNAME: api-local
+      MQTT_API_PASSWORD: ${MQTT_API_PASSWORD}
+      MQTT_API_CLIENT_ID: pievi-api-local
+    ports:
+      - '${API_BIND:-0.0.0.0}:${API_PORT:-3000}:3000'
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:3000/health").then(async r=>{if(!r.ok||(await r.json()).status!=="ok")process.exit(1)}).catch(()=>process.exit(1))']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  esp-virtual:
+    <<: *app
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      broker:
+        condition: service_healthy
+    environment:
+      DEVICE_ID: bancada-01
+      MQTT_URL: mqtt://broker:1883
+      MQTT_ESP_USERNAME: bancada-01
+      MQTT_ESP_PASSWORD: ${MQTT_ESP_PASSWORD}
+      ESP_NVS_PATH: /data/nvs.json
+    volumes:
+      - esp-nvs:/data
+    command: [node, --import, tsx, scripts/virtual-esp.ts]
+
+  validate:
+    <<: *app
+    profiles: [tools]
+    volumes:
+      - ./tmp/compose-validation:/reports
+      - validation-state:/validation
+    depends_on:
+      api:
+        condition: service_healthy
+      esp-virtual:
+        condition: service_started
+    environment:
+      <<: *database
+      PIEVI_VALIDATE_VIRTUAL: '1'
+      VALIDATION_API_URL: http://api:3000
+      OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operador}
+      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:?Execute npm run setup:compose}
+    command: [node, --import, tsx, scripts/validate-compose.ts]
+
+volumes:
+  postgres-data:
+  broker-credentials:
+  esp-nvs:
+  validation-state:

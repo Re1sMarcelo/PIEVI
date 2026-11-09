@@ -4,13 +4,16 @@ import { DEVICE_ID, Simulator } from './simulator.js';
 import { AuthDatabaseError, MemoryAuthStore, PostgresAuthStore, type AuthStore } from './auth/store.js';
 import { createDatabasePool } from './database.js';
 import { configError } from './controlConfig.js';
+import type { IntegratedRuntime } from './integrated/runtime.js';
+import { registerIntegratedRoutes } from './integrated/routes.js';
+import { DomainRejection } from './persistence/store.js';
 
-export function createApp(options: { authStore?: AuthStore; logger?: boolean } = {}) {
+export function createApp(options: { authStore?: AuthStore; logger?: boolean; integrated?:IntegratedRuntime } = {}) {
   const app = Fastify({ logger: options.logger ?? true });
-  const simulator = new Simulator();
-  const timer = setInterval(() => simulator.recordTelemetry(), 15_000);
+  const simulator = options.integrated ? null : new Simulator();
+  const timer = setInterval(() => simulator?.recordTelemetry(), 15_000);
   timer.unref();
-  const controlTimer = setInterval(() => simulator.tick(), 1000);
+  const controlTimer = setInterval(() => simulator?.tick(), 1000);
   controlTimer.unref();
   const demoAuth = process.env.NODE_ENV !== 'production' && process.env.PIEVI_DEMO_AUTH === '1';
   const auth = options.authStore ?? (() => {
@@ -25,10 +28,12 @@ export function createApp(options: { authStore?: AuthStore; logger?: boolean } =
   })();
   app.addHook('onReady', async () => {
     await auth.initialize();
+    if (options.integrated) await options.integrated.start();
     app.log.info({ authStorage: auth.storage }, 'Autenticação inicializada.');
   });
-  app.addHook('onClose', async () => { clearInterval(timer); clearInterval(controlTimer); await auth.close(); });
+  app.addHook('onClose', async () => { clearInterval(timer); clearInterval(controlTimer); await options.integrated?.stop(); await auth.close(); });
   app.setErrorHandler((error, request, reply) => {
+    if (error instanceof DomainRejection) return reply.code(409).send({error:error.message});
     if (error instanceof AuthDatabaseError) {
       request.log.error('PostgreSQL indisponível para autenticação.');
       return reply.code(503).send({ error: 'Autenticação temporariamente indisponível. Tente novamente.' });
@@ -51,7 +56,7 @@ export function createApp(options: { authStore?: AuthStore; logger?: boolean } =
     }
   });
 
-  app.get('/health', async () => ({ status: 'ok', authStorage: auth.storage, simulation: true }));
+  app.get('/health', async () => ({ status: options.integrated && !options.integrated.worker.status.ready ? 'degraded' : 'ok', authStorage: auth.storage, simulation: !options.integrated || !!options.integrated.options.virtual,...options.integrated?.health() }));
 
   app.post('/v1/auth/login', async (request, reply): Promise<LoginResponse | { error: string }> => {
     const body = request.body as { username?: unknown; password?: unknown } | null;
@@ -72,6 +77,9 @@ export function createApp(options: { authStore?: AuthStore; logger?: boolean } =
     if (token) await auth.logout(token);
     return { ok: true };
   });
+
+  if (options.integrated) {registerIntegratedRoutes(app,options.integrated);return app;}
+  if (!simulator) throw new Error('Modo de operação inválido.');
 
   app.get('/v1/devices/:deviceId/snapshot', async (request, reply) => {
     if (!isDevice(request.params)) return reply.code(404).send({ error: 'Dispositivo não encontrado.' });

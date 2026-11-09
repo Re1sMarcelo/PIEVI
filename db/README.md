@@ -1,5 +1,7 @@
 # Modelo PostgreSQL do PIEVI
 
+Para evoluir um banco existente para a persistência operacional MQTT v1, consulte [migração incremental e gravação PostgreSQL](../docs/persistencia-postgresql.md). A migração `migrations/004_mqtt_persistence.sql` usa runner com checksum; não reaplique o esquema inicial em banco populado.
+
 Modelo revisado a partir de [`tmp/db/db_PIEVI.txt`](../tmp/db/db_PIEVI.txt), preservado como referência original. A [revisão detalhada](../docs/revisao-modelo-banco.md) explica as correções, os limites de responsabilidade do banco e a política aprovada de operador único com cadastro controlado.
 
 Para o responsável pelo firmware e sensores, consulte o [guia de integração ESP32 e banco](../docs/guia-banco-esp32-sensores.md), com estrutura, dicionário de campos, exemplos MQTT, consultas SQL e roteiro de bancada. A [versão em PDF](../output/pdf/PIEVI-guia-banco-ESP32-sensores.pdf) está pronta para compartilhar.

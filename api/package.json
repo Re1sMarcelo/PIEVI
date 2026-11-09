@@ -5,15 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "lab": "tsx scripts/lab.ts",
+    "virtual:esp": "tsx scripts/virtual-esp.ts",
+    "validate:integrated": "tsx scripts/validate-integrated.ts",
+    "test:integrated": "node --import tsx --test tests/integrated.test.ts",
+    "test:provision": "node --import tsx --test tests/provision-compose.test.ts",
     "hash-password": "node scripts/hash-password.mjs",
     "provision:operator": "tsx scripts/provision-operator.ts",
     "db:check": "tsx scripts/check-db.ts",
+    "db:migrate": "tsx scripts/migrate-db.ts",
+    "device:db": "tsx scripts/device-db.ts",
     "typecheck": "tsc -p tsconfig.check.json",
     "test:simulator": "node --import tsx tests/simulator-smoke.mjs",
     "test:dashboard": "node --import tsx --test tests/dashboard.test.ts",
     "test:control": "node --import tsx --test tests/control.test.ts",
     "test:auth": "node --import tsx --test tests/auth.test.ts",
     "test:mqtt-contract": "node --import tsx --test tests/mqtt-contract.test.ts",
+    "test:persistence": "node --import tsx --test tests/persistence.test.ts",
     "contract:export": "tsx scripts/export-mqtt-contract.ts",
     "contract:check": "tsx scripts/export-mqtt-contract.ts --check",
     "contract:validate": "tsx scripts/validate-mqtt-message.ts",
@@ -23,11 +31,13 @@
   "dependencies": {
     "ajv": "8.20.0",
     "fastify": "^5.12.4",
+    "mqtt": "5.16.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/pg": "^8.23.1",
+    "aedes": "1.2.0",
     "tsx": "^4.0.0",
     "typescript": "~6.0.3"
   }

@@ -25,11 +25,11 @@ export function PageHeader({ tab, snapshot, connected, onLogout }: { tab: Tab; s
         <Text style={styles.title} accessibilityRole="header">{titles[tab]}</Text>
         <Pressable style={({ pressed }) => [styles.logout, pressed && { backgroundColor: '#ffffff30' }]} onPress={onLogout} accessibilityRole="button" accessibilityLabel="Sair da conta"><Icon name="logout" size={20} color="white" /></Pressable>
       </View>
-      <Text style={styles.subtitle}>Cultivo de morangos · simulação</Text>
+      <Text style={styles.subtitle}>Cultivo de morangos · {snapshot?.mode==='mqtt-virtual' ? 'ESP virtual via MQTT' : snapshot?.mode==='mqtt' ? 'estufa conectada' : 'simulação local'}</Text>
       {tab === 'Painel' && <View style={styles.statusRow}>
         <View style={styles.statusBadge}>
           <View style={[styles.dot, { backgroundColor: online ? '#299c43' : '#b6434b' }]} />
-          <Text style={styles.statusText}>{!connected ? 'API sem conexão' : !snapshot ? 'Conectando…' : !snapshot.online ? 'Dispositivo offline' : online ? 'Simulador online' : 'Dados desatualizados'}</Text>
+          <Text style={styles.statusText}>{!connected ? 'API sem conexão' : !snapshot ? 'Conectando…' : !snapshot.online ? 'Dispositivo offline' : online ? snapshot.mode && snapshot.mode!=='simulator' ? 'ESP online · MQTT' : 'Simulador online' : 'Dados desatualizados'}</Text>
         </View>
         <Text style={styles.updated}>Atualizado às {updated}</Text>
       </View>}

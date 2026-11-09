@@ -35,17 +35,17 @@ export function alertDetails(alert: Alert, timeZone: string): DetailField[] {
     { label: 'Situação', value: alert.endedAt ? 'Resolvido' : 'Ativo' },
     { label: 'Prioridade', value: severityLabel[alert.severity] },
     { label: 'O que fazer', value: alert.suggestedAction },
-    { label: 'Início', value: dateLabel(alert.startedAt, timeZone) },
-    { label: 'Resolução', value: alert.endedAt ? dateLabel(alert.endedAt, timeZone) : 'A condição continua ativa' },
+    { label: 'Início', value: `${dateLabel(alert.startedAt, timeZone)}${alert.startedAtBasis==='received' ? ' · horário de recepção' : ''}` },
+    { label: 'Resolução', value: alert.endedAt ? `${dateLabel(alert.endedAt, timeZone)}${alert.endedAtBasis==='received' ? ' · confirmação no backend' : ''}` : 'A condição continua ativa' },
     { label: 'Reconhecimento', value: alert.acknowledgedAt ? dateLabel(alert.acknowledgedAt, timeZone) : 'Ainda não reconhecido' },
     { label: 'Código', value: alert.code },
   ];
 }
 const eventLabel: Record<DeviceEvent['kind'], string> = {
   actuation: 'Acionamento', command: 'Comando', mode_change: 'Mudança de modo', alert: 'Alerta',
-  reading: 'Leitura', configuration: 'Configuração', simulation: 'Simulação',
+  reading: 'Leitura', configuration: 'Configuração', simulation: 'Simulação', connection: 'Conexão',
 };
-const commandLabel = { accepted: 'Aceito', completed: 'Concluído', rejected: 'Recusado', expired: 'Expirado' };
+const commandLabel = { pending: 'Pendente', sent: 'Enviado', accepted: 'Aceito', completed: 'Concluído', rejected: 'Recusado', expired: 'Expirado' };
 const originLabel = { simulator: 'Simulador', operator: 'Operador', esp32: 'ESP32' };
 export function historyRows(data: DeviceHistory, category: HistoryCategory, sensorKey: SensorKey, period: HistoryPeriod, now: number, timeZone: string): HistoryRow[] {
   const from = startOfPeriod(period, now, timeZone);
@@ -59,7 +59,7 @@ export function historyRows(data: DeviceHistory, category: HistoryCategory, sens
       const value = !valid ? 'Sem leitura confiável' : sensorKey === 'waterLevel' ? raw === 'OK' ? 'Nível adequado' : 'Nível baixo' : `${Number(raw).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}${sensor.unit}`;
       return { id: t.id, time: t.occurredAt, title: value, summary: sensor.label, details: [
         { label: sensor.label, value }, { label: 'Qualidade', value: valid ? 'Leitura confiável' : 'Sensor indisponível' },
-        { label: 'Registrada em', value: dateLabel(t.occurredAt, timeZone) },
+        { label: t.timeBasis==='received' ? 'Recebida em' : 'Registrada em', value: dateLabel(t.occurredAt, timeZone) },
         { label: 'Relógio', value: t.clockReliable ? 'Hora confiável' : 'Hora do dispositivo não confiável' },
         ...(sensorKey === 'waterLevel' ? [{ label: 'Medição', value: 'Indicação da boia. Não representa percentual de água.' }] : []),
       ] };

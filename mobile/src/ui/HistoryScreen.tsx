@@ -14,8 +14,8 @@ const categories: { id: HistoryCategory; label: string; description: string; ico
   { id: 'configuration', label: 'Configurações', description: 'Versões aplicadas', icon: 'settings' },
   { id: 'system', label: 'Sistema', description: 'Cenários e simulação', icon: 'history' },
 ];
-interface Props { data: DeviceHistory | null; clock: number; timeZone: string; connected: boolean }
-export function HistoryScreen({ data, clock, timeZone, connected }: Props) {
+interface Props { data: DeviceHistory | null; clock: number; timeZone: string; connected: boolean; persistent?:boolean }
+export function HistoryScreen({ data, clock, timeZone, connected, persistent }: Props) {
   const [category, setCategory] = useState<HistoryCategory | null>(null);
   const [sensor, setSensor] = useState<SensorKey>('airTemperatureC');
   const [period, setPeriod] = useState<HistoryPeriod>('all');
@@ -54,7 +54,7 @@ export function HistoryScreen({ data, clock, timeZone, connected }: Props) {
         {rows.length > limit && <Pressable accessibilityRole="button" style={s.button} onPress={() => setLimit(value => value + 20)}><Text style={s.buttonText}>Mostrar mais registros</Text></Pressable>}
       </>}
     </>}
-    <Text style={[s.helper, { textAlign: 'center' }]}>Simulação · histórico temporário. Reiniciar o simulador apaga os registros.</Text>
+    <Text style={[s.helper, { textAlign: 'center' }]}>{persistent ? 'Histórico persistido · até 500 registros recentes por categoria.' : 'Simulação · histórico temporário. Reiniciar o simulador apaga os registros.'}</Text>
     {selected && <RecordSheet title="Detalhes do registro" fields={selected.details} onClose={() => setSelected(null)} />}
   </View>;
 }

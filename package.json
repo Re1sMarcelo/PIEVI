@@ -7,8 +7,15 @@
     "api"
   ],
   "scripts": {
+    "setup:compose": "node api/scripts/setup-compose.mjs",
+    "package:delivery": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package-delivery.ps1",
+    "compose:up": "docker compose --env-file .env.compose up --build -d --wait",
+    "compose:down": "docker compose --env-file .env.compose down",
+    "validate:compose": "node api/scripts/validate-compose.mjs",
     "dev:mobile": "npm run start -w mobile",
     "dev:api": "npm run dev -w api",
+    "lab": "npm run lab -w api",
+    "validate:integrated": "npm run validate:integrated -w api",
     "check": "npm run typecheck -w mobile && npm run typecheck -w api",
     "build:api": "npm run build -w api",
     "test:db": "node --test db/tests/schema.test.mjs"

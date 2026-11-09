@@ -2,7 +2,7 @@
 
 Aplicativo React Native com Expo e TypeScript, e API Fastify com TypeScript. A primeira fatia usa uma bancada simulada: Painel, Histórico, Alertas, Controle e limites editáveis.
 
-A [entrega do ambiente integrado](docs/entrega-ambiente-integrado.md) começou pelo [Contrato MQTT v1](docs/contrato-mqtt-v1.md), com [schema e exemplos para o ESP32](protocol/mqtt/v1/README.md). A integração MQTT/PostgreSQL e o ambiente Docker serão implementados nas etapas seguintes; a execução atual do app continua simulada.
+A [entrega do ambiente integrado](docs/entrega-ambiente-integrado.md) inclui [Contrato MQTT v1](docs/contrato-mqtt-v1.md), [schema e exemplos para o ESP32](protocol/mqtt/v1/README.md), [persistência PostgreSQL](docs/persistencia-postgresql.md), API MQTT e ESP virtual. O [guia do ambiente integrado](docs/ambiente-integrado.md) explica como usar o laboratório sem Docker ou executar PostgreSQL, Mosquitto, API e ESP virtual em containers. A conexão com hardware físico ainda precisa de validação.
 
 **Recebeu o projeto para testar no celular Android?** Siga o [guia de execução com Expo Go](GUIA-ANDROID-EXPO-GO.md), incluindo a configuração demo sem PostgreSQL e as instruções para outra IA.
 
@@ -30,7 +30,23 @@ Para rodar o simulador isolado sem `DATABASE_URL`, o modo local mantém `demo` /
 
 ## Desenvolvimento
 
-Em terminais separados:
+Para testar o caminho integrado com dados persistidos, sem usar `api/.env`:
+
+```powershell
+npm.cmd run lab
+```
+
+Esse laboratório usa PostgreSQL/PGlite em disco, broker MQTT/TCP e ESP virtual, com login local `operador` / `estufa-local-123`. Para PostgreSQL e Mosquitto em containers separados:
+
+```powershell
+npm.cmd run setup:compose
+npm.cmd run compose:up
+npm.cmd run validate:compose
+```
+
+O Compose gera credenciais próprias em `.env.compose`. Veja o [guia integrado](docs/ambiente-integrado.md) para abrir o app, preservar os volumes e preparar o pacote de entrega. Execute apenas uma API na porta 3000.
+
+Para o simulador original, em terminais separados:
 
 ```powershell
 npm.cmd run dev:api
@@ -50,7 +66,7 @@ npm.cmd run test:auth -w api
 
 As dependências precisam ser instaladas antes de executar os comandos acima. O mobile usa Expo SDK 58, React Native 0.88 e React 19.3. Veja a [validação da migração](docs/validacao-expo-sdk58.md). O SDK Android não foi encontrado neste computador; Expo Go em um aparelho físico pode ser usado sem ele.
 
-As [decisões aprovadas](docs/decisoes-aprovadas.md) e a [arquitetura](docs/arquitetura-proposta.md) orientam a integração com PostgreSQL, MQTT e ESP32. A API usa autenticação persistente quando conectada ao banco; dados e comandos do simulador continuam em memória. O ambiente atual é de desenvolvimento.
+As [decisões aprovadas](docs/decisoes-aprovadas.md) e a [arquitetura](docs/arquitetura-proposta.md) orientam a integração com PostgreSQL, MQTT e ESP32. No modo `simulator`, dados operacionais continuam em memória; nos modos MQTT, leituras, comandos, configurações e alertas são persistidos. Os ambientes entregues são de desenvolvimento.
 
 O [Painel da estufa com cenários simulados](docs/painel-simulado.md) permite testar leituras, controles temporizados, alertas e falhas diretamente no app. Use **Controle → Testar sem a estufa** para escolher cenários de desenvolvimento. O [menu Controle simulado](docs/controle-simulado.md) inclui parâmetros por sensores, janela, agenda de reserva, duração manual, testes e avanço do relógio sem depender da estufa. O [Histórico e Alertas](docs/historico-alertas-simulados.md) separa os registros por categoria e mantém apenas condições ativas no menu Alertas.
 

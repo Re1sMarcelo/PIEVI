@@ -159,7 +159,7 @@ export function Dashboard({ snapshot, connected, clock, telemetry: history, busy
             {selectedPump ? <>
               <Text style={styles.secondaryValue}>{fresh ? pumps[selectedPump].isOn ? 'Ligada' : 'Desligada' : 'Estado atual desconhecido'} · {modeLabel[pumps[selectedPump].mode]}</Text>
               {pumps[selectedPump].expiresAt && <Text style={styles.countdown}>Modo manual: {Math.max(0, Math.ceil((Date.parse(pumps[selectedPump].expiresAt!) - clock) / 1000))} s restantes</Text>}
-              <Text style={styles.helper}>A saída só muda após a confirmação do simulador. B1 tem teto de 300 s; cada pulso de B2, 60 s.</Text>
+              <Text style={styles.helper}>A saída só muda após o estado confirmado pelo dispositivo. B1 tem teto de 300 s; cada pulso de B2, 60 s.</Text>
               {!!controlBlock && <Text style={styles.blocked}>{controlBlock}</Text>}
               {!!feedback && <Text style={styles.helper} accessibilityRole="alert">{feedback}</Text>}
               <View style={styles.chips}>{([
