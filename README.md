@@ -1,5 +1,7 @@
 # PIEVI
 
+**Vai testar com o ESP32 físico em outro notebook?** Siga o [guia presencial, instalação após clone e checklist](GUIA-TESTE-ESP-FISICO.md). O modo `physical:up` inicia API, broker e banco local persistente sem ESP virtual; `physical:mobile` configura o app pela rede local e `physical:check` verifica a integração sem acionar bombas.
+
 Aplicativo React Native com Expo e TypeScript, e API Fastify com TypeScript. A primeira fatia usa uma bancada simulada: Painel, Histórico, Alertas, Controle e limites editáveis.
 
 A [entrega do ambiente integrado](docs/entrega-ambiente-integrado.md) inclui [Contrato MQTT v1](docs/contrato-mqtt-v1.md), [schema e exemplos para o ESP32](protocol/mqtt/v1/README.md), [persistência PostgreSQL](docs/persistencia-postgresql.md), API MQTT e ESP virtual. O [guia do ambiente integrado](docs/ambiente-integrado.md) explica como usar o laboratório sem Docker ou executar PostgreSQL, Mosquitto, API e ESP virtual em containers. A conexão com hardware físico ainda precisa de validação.

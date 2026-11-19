@@ -1,6 +1,8 @@
 # Contrato ESP32 ↔ backend — PIEVI MQTT v1
 
-Este é o contrato de implementação para o firmware e a próxima integração da API. Substitui os exemplos MQTT propostos no guia de 03/11. A estrutura SQL daquele guia continua sendo referência, com as evoluções descritas abaixo. As rotas atuais do app ainda usam o simulador; criar estes arquivos não estabelece conexão MQTT nem gravação operacional no PostgreSQL.
+Este é o contrato de implementação para o firmware e a integração MQTT da API. Substitui os exemplos MQTT propostos no guia de 03/11. A API já implementa o transporte MQTT e a persistência; os modos de execução são descritos no [ambiente integrado](ambiente-integrado.md). Para instalar no notebook após clone e testar com hardware, siga o [guia presencial](../GUIA-TESTE-ESP-FISICO.md). A validação de sensores, relés e firmware real permanece pendente do ensaio físico.
+
+Este texto fixa as regras do protocolo. Referências históricas à evolução do banco devem ser lidas junto à [persistência implementada](persistencia-postgresql.md), que documenta a migração 004 já disponível.
 
 Os payloads completos estão em [protocol/mqtt/v1/examples](../protocol/mqtt/v1/examples/index.json). O [schema JSON](../protocol/mqtt/v1/schema.json) verifica estrutura, tipos, faixas e campos obrigatórios. O validador `api/src/mqtt/protocol.ts` acrescenta relações entre campos. Firmware e handlers precisam também cumprir as regras de sessão e segurança deste texto.
 
@@ -12,7 +14,7 @@ Sensores/relés ↔ ESP32 ↔ broker MQTT ↔ API ↔ PostgreSQL
                                      App
 ```
 
-A pasta `api` é o backend do app e também conterá o cliente MQTT. O ESP não recebe `DATABASE_URL`, token do operador nem senha do PostgreSQL. O ESP autentica no broker com credenciais próprias e só acessa os tópicos de sua bancada. O backend valida o dispositivo já provisionado; mensagens não criam dispositivos automaticamente.
+A pasta `api` é o backend do app e também contém o cliente MQTT. O ESP não recebe `DATABASE_URL`, token do operador nem senha do PostgreSQL. O ESP autentica no broker com credenciais próprias e só acessa os tópicos de sua bancada. O backend valida o dispositivo já provisionado; mensagens não criam dispositivos automaticamente.
 
 O firmware mede, calibra, executa AUTO, protege os atuadores e responde aos pedidos. O backend autoriza pedidos do app, registra autor/sessão, publica comandos, persiste mensagens e apresenta o estado informado. O app consulta a API. Aceitar um comando não é confirmação de saída ligada.
 

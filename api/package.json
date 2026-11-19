@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "physical:up": "tsx scripts/physical.ts",
+    "physical:check": "tsx scripts/check-physical.ts",
+    "physical:mobile": "tsx scripts/physical-mobile.ts",
+    "test:physical": "node --import tsx --test tests/physical.test.ts",
     "dev": "tsx watch src/server.ts",
     "lab": "tsx scripts/lab.ts",
     "virtual:esp": "tsx scripts/virtual-esp.ts",

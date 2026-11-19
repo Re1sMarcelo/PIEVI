@@ -1,5 +1,7 @@
 # Executar o ambiente integrado
 
+**ESP físico, inclusive em outro notebook após clone:** siga o [guia presencial](../GUIA-TESTE-ESP-FISICO.md). Os comandos `setup:physical`, `physical:up`, `physical:mobile` e `physical:check` usam configuração e banco locais próprios, sem ESP virtual e sem exigir Docker. Esse banco PostgreSQL/PGlite não é o servidor externo de `api/.env`.
+
 O app pode usar três modos. Escolha um por vez para não disputar a porta 3000.
 
 | Modo | Iniciar na raiz | Dados e transporte | Cenários no app |

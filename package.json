@@ -7,6 +7,11 @@
     "api"
   ],
   "scripts": {
+    "setup:physical": "node api/scripts/setup-physical.mjs",
+    "physical:up": "npm run physical:up -w api",
+    "physical:check": "npm run physical:check -w api --",
+    "physical:mobile": "npm run physical:mobile -w api",
+    "test:physical": "npm run test:physical -w api",
     "setup:compose": "node api/scripts/setup-compose.mjs",
     "package:delivery": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package-delivery.ps1",
     "compose:up": "docker compose --env-file .env.compose up --build -d --wait",
