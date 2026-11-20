@@ -11,7 +11,7 @@ $sourceFiles = & git -C $projectRoot ls-files --cached --others --exclude-standa
 if ($LASTEXITCODE -ne 0) { throw 'Não foi possível listar os arquivos do projeto.' }
 $included = @()
 foreach ($relativePath in $sourceFiles) {
-    if ($relativePath -notmatch '^(api/|mobile/|db/|docs/|protocol/|infra/|scripts/|README\.md$|GUIA-ANDROID-EXPO-GO\.md$|GLOSSARY\.md$|package(-lock)?\.json$|compose\.yaml$|Dockerfile$|\.dockerignore$|\.gitignore$)') { continue }
+    if ($relativePath -notmatch '^(api/|mobile/|db/|docs/|protocol/|infra/|scripts/|README\.md$|GUIA-ANDROID-EXPO-GO\.md$|GUIA-TESTE-ESP-FISICO\.md$|GLOSSARY\.md$|package(-lock)?\.json$|compose\.yaml$|Dockerfile$|\.dockerignore$|\.gitignore$)') { continue }
     if ($relativePath -match '(^|/)(node_modules|dist|\.expo|\.git|android|ios)(/|$)') { continue }
     $leafName = [System.IO.Path]::GetFileName($relativePath)
     if ($leafName -like '.env*' -and $leafName -ne '.env.example') { continue }
@@ -23,7 +23,7 @@ foreach ($relativePath in $sourceFiles) {
     Copy-Item -LiteralPath $source -Destination $destination
     $included += $relativePath
 }
-$requiredFiles = @('compose.yaml', 'Dockerfile', '.dockerignore', 'package-lock.json', 'api/scripts/setup-compose.mjs', 'docs/ambiente-integrado.md')
+$requiredFiles = @('compose.yaml', 'Dockerfile', '.dockerignore', 'package-lock.json', 'api/scripts/setup-compose.mjs', 'docs/ambiente-integrado.md', 'GUIA-TESTE-ESP-FISICO.md', 'api/scripts/setup-physical.mjs', 'docs/checklist-esp-fisico.md')
 foreach ($required in $requiredFiles) {
     if ($required -notin $included) { throw "Arquivo obrigatório ausente: $required" }
 }

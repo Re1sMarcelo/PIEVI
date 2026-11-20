@@ -1,6 +1,6 @@
 # PIEVI MQTT v1 — material para o firmware
 
-Leia o [contrato completo](../../../docs/contrato-mqtt-v1.md) antes de implementar. Este pacote define a comunicação; broker e ingestão ainda serão implementados nas próximas etapas da entrega.
+Leia o [contrato completo](../../../docs/contrato-mqtt-v1.md) antes de implementar. Este pacote define a comunicação; broker e ingestão MQTT já estão disponíveis na API. O [guia presencial](../../../GUIA-TESTE-ESP-FISICO.md) orienta o ensaio com hardware e a instalação após clone em outro notebook.
 
 - `schema.json`: JSON Schema draft-07, com uma definição por tópico.
 - `examples/index.json`: nome de cada arquivo, tópico, publicador, QoS e retain.
