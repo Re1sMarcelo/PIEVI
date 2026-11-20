@@ -23,3 +23,7 @@ GoogleService-Info.plist
 credentials.json
 *.pem
 *.key
+
+# Firmware: segredos e artefatos de build
+firmware/pievi_esp32/secrets.h
+firmware/build/
