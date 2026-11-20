@@ -81,3 +81,25 @@ npm.cmd run test:db
 ```
 
 Esse comando valida o SQL em um PostgreSQL isolado em memória, sem acessar o Railway ou mudar o banco da aplicação.
+
+
+
+
+
+
+prompt para claudao
+
+
+Vamos iniciar o teste do PIEVI com o ESP32 físico, os sensores, a boia, os relés, as bombas B1/B2 e o app no Expo Go. Trabalhe no notebook da bancada. Localize a cópia do PIEVI e confirme que ela contém a branch `preparo-esp-fisico` e os comandos `physical:*`.
+
+1. Leia `GUIA-TESTE-ESP-FISICO.md`, `docs/checklist-esp-fisico.md`, `docs/contrato-mqtt-v1.md`, `protocol/mqtt/v1/schema.json` e os exemplos em `protocol/mqtt/v1/examples/`. Localize também o firmware do ESP32 e a documentação da montagem. Se estiverem em outra pasta ou repositório, peça o caminho e continue preparando o notebook.
+
+2. Rode `ipconfig` no próprio notebook do teste, já conectado à rede da bancada. Identifique o IPv4 da interface que o ESP32 e o celular conseguem alcançar e atualize `LAN_IP` em `.env.physical`. Se o broker MQTT rodar no notebook, configure esse mesmo IP como host no firmware, na porta `MQTT_PORT` (padrão 1883). Se o broker estiver em outra máquina, confirme o endereço e configure `MQTT_URL` na bancada e o host correspondente no ESP32. Nos dois casos, o app usa o IP do notebook que hospeda a API.
+
+3. Se `.env.physical` estiver ausente, rode `npm.cmd run setup:physical`. Preencha `PHYSICAL_CHIP_ID` com a identificação real da placa e preserve as credenciais existentes. No broker local, use `deviceId=bancada-01`, usuário MQTT `bancada-01` e client ID `pievi-esp-bancada-01`. Mantenha senhas e tokens fora da conversa, do Git e dos registros.
+
+4. Compare o firmware com o contrato MQTT v1. Confira Wi-Fi, autenticação, tópicos, QoS 1, presença e Last Will, resposta a `sync`, telemetria, estado, eventos, comandos, ACKs e recibos. Confirme a porta COM, a pinagem, a polaridade dos relés e as proteções locais com a montagem real. Compile com a ferramenta do projeto de firmware. Antes de gravar, confirme com quem está na bancada que as cargas estão desconectadas e use um procedimento que preserve a NVS.
+
+5. Encerre instâncias do simulador do PIEVI que estejam usando as mesmas portas ou identidade. Instale as dependências se necessário. Em terminais separados, inicie `npm.cmd run physical:up` e `npm.cmd run physical:mobile`. Rode `npm.cmd run physical:check -- --infra`. No celular, abra `http://<LAN_IP>:3000/health` (ajuste se `API_PORT` for diferente), escaneie o QR do Expo Go e valide o login.
+
+6. Com o ESP32 conectado e as cargas desconectadas, valide presença, resposta ao `sync`, leituras recentes, sensores, boia, calibração do solo, relógio, configuração aplicada com versão >= 1 e saídas em condição segura. Rode `npm.cmd run physical:check`. Com o diagnóstico aprovado e a confirmação presencial, guie o teste supervisionado de B1 por 10 s e B2 por 5 s, uma de cada vez. Confira o acionamento, o corte no prazo e o histórico no app. Siga o checklist para testar as proteções, a reconexão e o reinício. Registre cada resultado como PASSOU, FALHOU ou NÃO TESTADO, com evidências em `tmp/physical-bench/`.
