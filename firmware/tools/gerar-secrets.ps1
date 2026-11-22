@@ -40,7 +40,7 @@ if (-not $Ssid) { $m = $iface | Select-String -Pattern '^\s*SSID\s*:\s*(.+)$' | 
 $profileLine = $iface | Select-String -Pattern '^\s*(Perfil|Profile)\s*:\s*(.+)$' | Select-Object -First 1
 $profileName = if ($profileLine -and -not $PSBoundParameters.ContainsKey('Ssid')) { $profileLine.Matches[0].Groups[2].Value.Trim() } else { $Ssid }
 $prof = netsh wlan show profile name="$profileName" key=clear
-$keyLine = $prof | Select-String -Pattern '^\s*(Conte.do da Chave|Key Content)\s*:\s*(.+)$' | Select-Object -First 1
+$keyLine = $prof | Select-String -Pattern '^\s*(Conte.{1,3}do da Chave|Key Content)\s*:\s*(.+)$' | Select-Object -First 1
 if (-not $keyLine) { throw "Senha do Wi-Fi '$Ssid' nao encontrada no perfil do Windows (rode como o usuario que conectou a rede)" }
 $wifiPass = $keyLine.Matches[0].Groups[2].Value.Trim()
 
