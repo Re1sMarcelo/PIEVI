@@ -4,7 +4,7 @@ import { createApp } from '../app.js';
 import { PostgresAuthStore } from '../auth/store.js';
 import { IntegratedRuntime } from '../integrated/runtime.js';
 import { startLocalBroker } from '../lab/broker.js';
-import { openPhysicalDatabase } from './database.js';
+import { openPhysicalDatabase, openPhysicalPostgres, type PhysicalData } from './database.js';
 import { validatePhysicalIdentity, type PhysicalSettings } from './settings.js';
 
 // This entry point never imports or creates VirtualESP and never sends an actuation/configuration command.
@@ -12,8 +12,11 @@ export async function startPhysicalBench(settings: PhysicalSettings, options: { 
   if (process.env.NODE_ENV === 'production') throw new Error('A bancada física local é exclusiva de desenvolvimento.');
   await validatePhysicalIdentity(settings);
   if (options.dataDir) mkdirSync(options.dataDir, { recursive: true });
-  const data = await openPhysicalDatabase({ chipId: settings.chipId, username: settings.operatorUsername, passwordHash: settings.operatorPasswordHash },
-    options.dataDir ? join(options.dataDir, 'postgres') : undefined);
+  const identity = { chipId: settings.chipId, username: settings.operatorUsername, passwordHash: settings.operatorPasswordHash };
+  // PHYSICAL_DATABASE_URL presente: PostgreSQL externo (ex.: Railway). Ausente: PGlite embarcado em tmp/physical-bench/.
+  const storage = settings.databaseUrl ? 'postgres' as const : 'pglite' as const;
+  const data: PhysicalData = settings.databaseUrl ? await openPhysicalPostgres(identity, settings.databaseUrl)
+    : await openPhysicalDatabase(identity, options.dataDir ? join(options.dataDir, 'postgres') : undefined);
   let broker: Awaited<ReturnType<typeof startLocalBroker>> | undefined;
   let app: ReturnType<typeof createApp> | undefined;
   let closed = false;
@@ -28,7 +31,7 @@ export async function startPhysicalBench(settings: PhysicalSettings, options: { 
     if (settings.brokerMode === 'local') broker = await startLocalBroker(settings.deviceId, options.brokerPort ?? settings.mqttPort, {
       host, apiPassword: settings.apiPassword, espPassword: settings.espPassword,
     });
-    const runtime = new IntegratedRuntime({ database: data.database, deviceId: settings.deviceId, virtual: false, storage: 'pglite',
+    const runtime = new IntegratedRuntime({ database: data.database, deviceId: settings.deviceId, virtual: false, storage,
       broker: broker?.api ?? { url: settings.brokerUrl, username: settings.apiUsername, password: settings.apiPassword, clientId: settings.apiClientId } });
     app = createApp({ authStore: new PostgresAuthStore(data.queryProxy), integrated: runtime, logger: false });
     await app.listen({ host, port: options.apiPort ?? settings.apiPort });

@@ -71,6 +71,7 @@ static bool mqttPublish(const String& topic, const String& body, bool retain) {
 
 static void onMqttEvent(void*, esp_event_base_t, int32_t id, void* data) {
   auto* e = static_cast<esp_mqtt_event_handle_t>(data);
+  if (!e || e->client != mqttClient) return;   // cliente antigo sendo desmontado em segundo plano
   switch ((esp_mqtt_event_id_t)id) {
     case MQTT_EVENT_CONNECTED: evConnected = true; break;
     case MQTT_EVENT_DISCONNECTED: evDisconnected = true; break;
@@ -92,10 +93,19 @@ static void onMqttEvent(void*, esp_event_base_t, int32_t id, void* data) {
   }
 }
 
+// stop/destroy esperam o task interno do MQTT sair; com TLS ele pode ficar preso numa leitura de rede por mais
+// que o watchdog do loop (15 s) e a placa reiniciava. O cliente antigo e desmontado num task proprio; o loop segue.
+static void mqttDestroyTask(void* handle) {
+  auto old = static_cast<esp_mqtt_client_handle_t>(handle);
+  esp_mqtt_client_stop(old); esp_mqtt_client_destroy(old);
+  vTaskDelete(nullptr);
+}
 static void mqttStop() {
   if (!mqttClient) return;
   mqttUp = false; link1->onDisconnected();
-  esp_mqtt_client_stop(mqttClient); esp_mqtt_client_destroy(mqttClient); mqttClient = nullptr;
+  esp_mqtt_client_handle_t old = mqttClient;
+  mqttClient = nullptr;   // a partir daqui os eventos do cliente antigo sao ignorados (onMqttEvent)
+  if (xTaskCreate(mqttDestroyTask, "mqttStop", 4096, old, 1, nullptr) != pdPASS) { esp_mqtt_client_stop(old); esp_mqtt_client_destroy(old); }
 }
 
 static void mqttStart() {
@@ -188,7 +198,7 @@ static Inputs readInputs(bool sample) {
 // ----------------------------------------------------------------------------- serial
 static void printStatus() {
   Serial.printf("[STATUS] boot=%u bootId=%s conexao=%s wifi=%s ip=%s mqtt=%s hora=%s cfg=v%d fila=%u descartadas=%u\n",
-    link1->bootNumber(), link1->bootId().c_str(), link1->connectionId().c_str(), WiFi.status() == WL_CONNECTED ? "ok" : "off",
+    (unsigned)link1->bootNumber(), link1->bootId().c_str(), link1->connectionId().c_str(), WiFi.status() == WL_CONNECTED ? "ok" : "off",
     WiFi.localIP().toString().c_str(), mqttUp ? "ok" : "off", clockReliable() ? "confiavel" : "SEM HORA",
     link1->activeConfigVersion(), (unsigned)link1->pendingCount(), (unsigned)link1->droppedMessages());
   Serial.printf("[STATUS] B1=%s %s %s | B2=%s %s %s | nivel=%s\n",
@@ -250,7 +260,7 @@ void setup() {
   link1 = new v1::Link(*ctrl, prefs, {DEVICE_ID, FW_VERSION}, mqttPublish);
   link1->begin(bootNumber);
   ctrl->reportReboot(resetReasonText());
-  Serial.printf("[BOOT] bootNumber=%u bootId=%s\n", bootNumber, link1->bootId().c_str());
+  Serial.printf("[BOOT] bootNumber=%u bootId=%s\n", (unsigned)bootNumber, link1->bootId().c_str());
 
   // 3) rede e relogio
   rxQueue = xQueueCreate(16, sizeof(String*));

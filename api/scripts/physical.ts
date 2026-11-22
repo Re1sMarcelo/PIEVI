@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { networkInterfaces } from 'node:os';
 import { startPhysicalBench } from '../src/physical/index.js';
 import { physicalDataDir, readPhysicalSettings } from '../src/physical/settings.js';
+import { describeDatabaseUrl } from '../src/physical/database.js';
 
 // Deliberately does not load api/.env, .env.compose, the laboratory, or the virtual ESP.
 let bench: Awaited<ReturnType<typeof startPhysicalBench>> | undefined;
@@ -21,7 +22,8 @@ try {
   const descriptor = openSync(lock, 'wx'); ownsLock = true;
   try { writeFileSync(descriptor, String(process.pid)); } finally { closeSync(descriptor); }
   bench = await startPhysicalBench(settings, { dataDir: physicalDataDir });
-  console.log(`Bancada FÍSICA iniciada; ESP virtual desativado neste processo.\nAPI local: ${bench.url}\nBanco PostgreSQL embarcado/PGlite: ${physicalDataDir}\nNenhum comando de bomba ou configuração foi enviado. Aguardando o ESP real.`);
+  const banco = settings.databaseUrl ? `Banco PostgreSQL externo: ${describeDatabaseUrl(settings.databaseUrl)}` : `Banco PostgreSQL embarcado/PGlite: ${physicalDataDir}`;
+  console.log(`Bancada FÍSICA iniciada; ESP virtual desativado neste processo.\nAPI local: ${bench.url}\n${banco}\nNenhum comando de bomba ou configuração foi enviado. Aguardando o ESP real.`);
   if (settings.lanIp) console.log(`API no celular: http://${settings.lanIp}:${settings.apiPort}\nBroker para o ESP: ${settings.brokerMode === 'local' ? `mqtt://${settings.lanIp}:${settings.mqttPort}` : 'externo, conforme combinado com o colega'}`);
   const interfaces = Object.values(networkInterfaces()).flat().filter(Boolean);
   if (settings.lanIp && !interfaces.some(address => address?.address === settings.lanIp)) console.warn('LAN_IP não está nas interfaces deste notebook. Atualize .env.physical antes de abrir o app.');

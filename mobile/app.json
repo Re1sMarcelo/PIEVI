@@ -15,6 +15,18 @@
     },
     "ios": {
       "supportsTablet": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "779a5d28-e3a3-4e42-9a2b-85a3af0df56a"
+      }
+    },
+    "owner": "marceloreis2003",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/779a5d28-e3a3-4e42-9a2b-85a3af0df56a"
     }
   }
 }

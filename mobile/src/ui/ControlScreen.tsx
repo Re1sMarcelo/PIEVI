@@ -89,17 +89,21 @@ export function ControlScreen({ snapshot, connected, clock, busy, active, feedba
     if (seconds !== undefined && (!Number.isInteger(seconds) || seconds < 1 || seconds > max)) { setError(`${pump}: informe uma duração inteira de 1 a ${max} segundos para este comando.`); return; }
     setConfirmation({ kind: 'command', pump, action, duration: seconds });
   }
+  // Confirmou: o pop-up fecha na hora (evita toques repetidos) e o resultado aparece na tela, fora dele.
   async function confirm() {
     if (!confirmation || busy) return;
-    if (confirmation.kind === 'reload') { loadApplied(); return; }
-    if (confirmation.kind === 'save') {
-      if (await onSave(confirmation.config, baseVersion)) { setDirty(false); setConfirmation(null); }
+    const pending = confirmation;
+    if (pending.kind === 'reload') { loadApplied(); return; }
+    if (pending.kind === 'command' && pending.action === 'IGNORE_FLOAT' && !supervised) { setError('Confirme a supervisão presencial para testar ignorando a boia.'); return; }
+    setConfirmation(null);
+    setError('');
+    if (pending.kind === 'save') {
+      if (await onSave(pending.config, baseVersion)) setDirty(false);
       return;
     }
-    const block = controlBlock(snapshot, confirmation.pump, confirmation.action, connected, clock);
-    if (block) { setError(block); return; }
-    if (confirmation.action === 'IGNORE_FLOAT' && !supervised) { setError('Confirme a supervisão presencial para testar ignorando a boia.'); return; }
-    if (await onCommand(confirmation.pump, confirmation.action, confirmation.duration, confirmation.action === 'IGNORE_FLOAT' ? supervised : undefined)) setConfirmation(null);
+    const block = controlBlock(snapshot, pending.pump, pending.action, connected, clock);
+    if (block) { setError(`${pending.pump}: ${block}`); return; }
+    await onCommand(pending.pump, pending.action, pending.duration, pending.action === 'IGNORE_FLOAT' ? supervised : undefined);
   }
   function addSchedule(time = '') {
     if (time && draft.schedule.some(row => row.time === time)) { setError('Esse horário já está na agenda.'); return; }
@@ -125,6 +129,8 @@ export function ControlScreen({ snapshot, connected, clock, busy, active, feedba
     {!fresh && <Text style={styles.warning}>Sem dados recentes: o estado atual é desconhecido. Aguarde reconexão para enviar comandos e configurações.</Text>}
     {dirty && <View style={styles.card}><Text style={styles.title}>Alterações ainda não aplicadas</Text><Text style={styles.helper}>{conflict ? 'Uma versão mais recente foi aplicada em outra sessão. Recarregue antes de editar novamente.' : 'O dispositivo continua usando a versão aplicada acima. Seu rascunho é preservado ao trocar as abas.'}</Text><View style={styles.actions}><Button label="Revisar e aplicar" onPress={prepareSave} primary disabled={busy || !fresh || conflict} /><Button label="Recarregar aplicada" onPress={() => setConfirmation({ kind: 'reload' })} disabled={busy} /></View></View>}
     {!!error && <Text style={styles.error} accessibilityRole="alert">{error}</Text>}
+    {!confirmation && busy && <View style={styles.row}><ActivityIndicator color={colors.green} /><Text style={styles.helper}>Enviando ao ESP e aguardando confirmação…</Text></View>}
+    {!confirmation && !!feedback && <Text style={styles.helper} accessibilityRole="alert">{feedback}</Text>}
     <View style={styles.tabs}>{([['manual', 'Manual'], ['sensors', 'Sensores'], ['schedule', 'Horários']] as const).map(([id, label]) => <Pressable key={id} onPress={() => setSection(id)} accessibilityRole="tab" accessibilityState={{ selected: section === id }} style={[styles.tab, section === id && styles.selectedTab]}><Text style={[styles.tabText, section === id && { color: 'white' }]}>{label}</Text></Pressable>)}</View>
 
     {section === 'manual' && <>

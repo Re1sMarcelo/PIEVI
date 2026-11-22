@@ -2,6 +2,7 @@ import type { Alert, CommandAction, CommandResult, Config, DeviceEvent, DeviceHi
 import { DEFAULT_CONFIG } from '../controlConfig.js';
 import type { Sql, TransactionDatabase } from '../persistence/database.js';
 import { DomainRejection, iso, type Payload } from '../persistence/domain.js';
+import { dbNow } from '../persistence/clock.js';
 
 const pumpId=(value:string):PumpId=>value==='irrigacao' ? 'B1' : 'B2';
 const actions:Record<string,CommandAction>={manual_on:'MANUAL_ON',manual_off:'MANUAL_OFF',voltar_auto:'AUTO',reset_falha:'RESET_FAULT',testar_bomba:'TEST',ignorar_boia:'IGNORE_FLOAT'};
@@ -51,7 +52,7 @@ export class IntegratedReader {
         WHERE d.identificador=$1 AND d.mqtt_habilitado`,[this.deviceId])).rows[0];
       if (!d) throw new DomainRejection('Bancada não habilitada para MQTT.');
       const device=d.dispositivo_id ?? d.id;
-      const now=Date.now(); const recent=(value:any)=>!!value && now-Date.parse(iso(value)!)<=45000;
+      const now=dbNow(); const recent=(value:any)=>!!value && now-Date.parse(iso(value)!)<=45000;
       const online=brokerReady && d.online && !!d.sincronizada_em && d.maior_boot===d.boot_numero && recent(d.ultimo_contato);
       const cfg=(await db.query('SELECT * FROM config_atual WHERE dispositivo_id=$1',[device])).rows[0];
       const reading=d.leitura_id ? (await db.query('SELECT * FROM leituras WHERE id=$1',[d.leitura_id])).rows[0] : undefined;

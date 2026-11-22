@@ -311,7 +311,7 @@ class Controller {
   // ------------------------------------------------------------ alertas (episodios)
   std::string makeEpisode(const std::string& code) {
     std::string c = code; for (auto& ch : c) ch = (ch == '_') ? '-' : (char)tolower(ch);
-    char b[96]; snprintf(b, sizeof b, "%s-boot%u-%04u", c.c_str(), boot_, ++episodeSeq_); return b;
+    char b[96]; snprintf(b, sizeof b, "%s-boot%u-%04u", c.c_str(), (unsigned)boot_, (unsigned)++episodeSeq_); return b;
   }
   Open* findOpen(const std::string& code, int pump) { for (auto& o : open_) if (o.code == code && o.pump == pump) return &o; return nullptr; }
   void openAlert(const std::string& code, const char* sev, const Pump* p, const std::string& detail = "") {
@@ -331,7 +331,9 @@ class Controller {
   bool alertOpen(const std::string& code, int pi = -1) { return findOpen(code, pi) != nullptr; }
 
   // ------------------------------------------------------------ sensores
-  void startupHold() { irrCooldownEnd_ = in_.nowMs + cfg_.cooldownIrrigMin * MIN; mistPauseEnd_ = in_.nowMs + cfg_.pausaNevoaMin * MIN; irrSince_ = mistSince_ = in_.nowMs; }
+  // Pausa apos o boot: 2 min (protege contra reinicios em sequencia) - o cooldown entre ciclos continua o da config.
+  static constexpr int kBootHoldIrrigMin = 2;
+  void startupHold() { irrCooldownEnd_ = in_.nowMs + kBootHoldIrrigMin * MIN; mistPauseEnd_ = in_.nowMs + cfg_.pausaNevoaMin * MIN; irrSince_ = mistSince_ = in_.nowMs; }
 
   void processSamples() {
     const int64_t now = in_.nowMs;
@@ -614,7 +616,7 @@ class Controller {
       if (want && !pc.on) { const auto& o = pumps_[1 - i]; if (now - o.lastStart < STAGGER_MS) want = false; }
       if (want && !pc.on) {
         pc.on = true; pc.onSince = now; pc.lastStart = now; pc.cycleOpen = true; pc.cycleCmd = cmd;
-        char b[64]; snprintf(b, sizeof b, "ciclo-boot%u-%04u", boot_, ++cycleSeq_); pc.cycleId = b;
+        char b[64]; snprintf(b, sizeof b, "ciclo-boot%u-%04u", (unsigned)boot_, (unsigned)++cycleSeq_); pc.cycleId = b;
         pc.soilBefore = soilPct_; pc.tBefore = airT_; pc.rhBefore = airRH_;
         Event e; e.type = Event::CycleStarted; e.pump = p; e.hasPump = true; e.cycleId = pc.cycleId; e.origin = originName(org); e.commandId = cmd;
         e.a = soilOkNow_ ? soilPct_ : NAN; e.b = dhtOkNow_ ? airT_ : NAN; e.c = dhtOkNow_ ? airRH_ : NAN; ev_.push_back(e); changed_ = true;
