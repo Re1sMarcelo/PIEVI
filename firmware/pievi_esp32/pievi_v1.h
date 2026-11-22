@@ -168,7 +168,8 @@ class Link {
     const uint32_t now = millis();
     if (sig != lastSig_ && now - lastStateMs_ >= 300) publishState(nullptr);
     if (now - lastStateMs_ >= kPeriodMs) publishState(nullptr);
-    if (now - lastTelemetryMs_ >= kPeriodMs) publishTelemetry();
+    // Heartbeat de 15 s (contrato) + envio antecipado quando a leitura muda de forma perceptivel.
+    if (now - lastTelemetryMs_ >= kPeriodMs || (now - lastTelemetryMs_ >= kMinTelemetryGapMs && telemetryChanged())) publishTelemetry();
     flush();
   }
 
@@ -188,7 +189,16 @@ class Link {
   bool debugPayloads = true;   // imprime na serial todo payload publicado (sem segredos)
 
  private:
-  static constexpr uint32_t kPeriodMs = 15000, kResendMs = 5000;
+  static constexpr uint32_t kPeriodMs = 15000, kResendMs = 5000, kMinTelemetryGapMs = 7500;   // banco remoto (Railway) grava ~1 msg a cada 3 s
+  // Ultima telemetria publicada, para detectar mudanca perceptivel.
+  struct LastTelemetry { bool dht = false, root = false, soil = false, low = true; float t = NAN, rh = NAN, rootT = NAN, soilPct = NAN; } lastTel_;
+  static bool moved(float a, float b, float eps) { return std::isfinite(a) != std::isfinite(b) || (std::isfinite(a) && std::fabs(a - b) >= eps); }
+  bool telemetryChanged() const {
+    const bool dht = c_.dhtReliable(), root = c_.rootReliable(), soil = c_.soilReliable() && calId_.length();
+    if (dht != lastTel_.dht || root != lastTel_.root || soil != lastTel_.soil || c_.levelLow() != lastTel_.low) return true;
+    return (dht && (moved(c_.airT(), lastTel_.t, 0.5f) || moved(c_.airRH(), lastTel_.rh, 2.0f))) ||
+           (root && moved(c_.rootT(), lastTel_.rootT, 0.5f)) || (soil && moved(c_.soilPct(), lastTel_.soilPct, 2.0f));
+  }
   static constexpr size_t kMaxQueued = 32, kMaxQueuedBytes = 65536;
 
   struct Pending { String id; Channel ch; String body; uint32_t lastSent; };
@@ -567,6 +577,9 @@ class Link {
     if (calId_.length()) d["activeCalibrationId"] = calId_; else d["activeCalibrationId"] = nullptr;
     send(CH_TELEMETRY, d);
     lastTelemetryMs_ = millis();
+    lastTel_.dht = dht; lastTel_.root = root; lastTel_.soil = soil; lastTel_.low = c_.levelLow();
+    lastTel_.t = dht ? c_.airT() : NAN; lastTel_.rh = dht ? c_.airRH() : NAN;
+    lastTel_.rootT = root ? c_.rootT() : NAN; lastTel_.soilPct = soil ? c_.soilPct() : NAN;
   }
 };
 

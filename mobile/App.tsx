@@ -30,6 +30,10 @@ import { LoginScreen } from './src/ui/LoginScreen';
 import { BottomNavigation, PageHeader, type Tab } from './src/ui/Navigation';
 import { colors } from './src/ui/theme';
 
+/** Live readings/outputs (small payload) refresh fast; the growing history refreshes less often and after each action. */
+const SNAPSHOT_REFRESH_MS = 2000;
+const HISTORY_REFRESH_MS = 15000;
+
 export default function App() {
   return <SafeAreaProvider><AppContent /></SafeAreaProvider>;
 }
@@ -53,6 +57,7 @@ function AppContent() {
   const refreshInFlight = useRef(false);
   const refreshRevision = useRef(0);
   const mutationInFlight = useRef(false);
+  const lastHistoryAt = useRef(0);
   const deviceClock = clock + (snapshot?.simulationClockOffsetMs ?? 0);
 
   useEffect(() => {
@@ -86,17 +91,19 @@ function AppContent() {
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
 
-  const refresh = useCallback(async (activeToken: string) => {
+  const refresh = useCallback(async (activeToken: string, includeHistory = true) => {
     if (refreshInFlight.current || activeSession.current !== activeToken) return;
     refreshInFlight.current = true;
     const revision = refreshRevision.current;
     try {
+      // The snapshot is small and carries the live readings/outputs; the history grows, so it is fetched less often.
+      const wantHistory = includeHistory || Date.now() - lastHistoryAt.current >= HISTORY_REFRESH_MS;
       const [nextSnapshot, nextHistory] = await Promise.all([
-        api.snapshot(activeToken), api.history(activeToken),
+        api.snapshot(activeToken), wantHistory ? api.history(activeToken) : Promise.resolve(null),
       ]);
       if (activeSession.current !== activeToken || revision !== refreshRevision.current) return;
       setSnapshot(nextSnapshot);
-      setHistory(nextHistory);
+      if (nextHistory) { setHistory(nextHistory); lastHistoryAt.current = Date.now(); }
       setConnected(true);
       setError('');
     } catch (caught) {
@@ -118,7 +125,7 @@ function AppContent() {
   useEffect(() => {
     if (!token) return;
     void refresh(token);
-    const timer = setInterval(() => { void refresh(token); }, 5000);
+    const timer = setInterval(() => { void refresh(token, false); }, SNAPSHOT_REFRESH_MS);
     return () => clearInterval(timer);
   }, [token, refresh]);
 

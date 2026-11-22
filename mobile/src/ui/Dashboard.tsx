@@ -106,7 +106,7 @@ export function Dashboard({ snapshot, connected, clock, telemetry: history, busy
   const soilTrend = history.slice(0, 20).reverse().filter(r => r.soilReliable && r.soilMoisturePercent !== null).map(r => r.soilMoisturePercent as number);
 
   return <View style={styles.dashboard}>
-    <View style={styles.updateRow}><Text style={styles.helper}>{fresh ? 'Atualização automática a cada 5 s' : 'Valores antigos · estado atual desconhecido'}</Text><Text style={styles.helper}>{readingAge(snapshot.lastSeenAt, clock)}</Text></View>
+    <View style={styles.updateRow}><Text style={styles.helper}>{fresh ? 'Atualização automática a cada 2 s' : 'Valores antigos · estado atual desconhecido'}</Text><Text style={styles.helper}>{readingAge(snapshot.lastSeenAt, clock)}</Text></View>
     <View style={styles.row}>
       <ReadingCard icon="temperature" label="Temperatura do ar" value={formatReading(t.dhtReliable ? t.airTemperatureC : null, ' °C')} detail={quality(t.dhtReliable)} warning={!fresh || !t.dhtReliable || (t.airTemperatureC ?? 0) >= config.emergencyTemperatureC} onPress={() => open('air')} />
       <ReadingCard icon="drop" label="Umidade do substrato" value={formatReading(t.soilReliable ? t.soilMoisturePercent : null, '%')} detail={`Faixa: ${config.soilMinPercent}% a ${config.soilMaxPercent}%`} warning={!fresh || !t.soilReliable || (t.soilMoisturePercent ?? 0) < config.soilMinPercent || (t.soilMoisturePercent ?? 100) > config.soilMaxPercent} onPress={() => open('soil')} />

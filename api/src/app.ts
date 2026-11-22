@@ -7,6 +7,7 @@ import { configError } from './controlConfig.js';
 import type { IntegratedRuntime } from './integrated/runtime.js';
 import { registerIntegratedRoutes } from './integrated/routes.js';
 import { DomainRejection } from './persistence/store.js';
+import { dbNow } from './persistence/clock.js';
 
 export function createApp(options: { authStore?: AuthStore; logger?: boolean; integrated?:IntegratedRuntime } = {}) {
   const app = Fastify({ logger: options.logger ?? true });
@@ -43,6 +44,9 @@ export function createApp(options: { authStore?: AuthStore; logger?: boolean; in
     request.log.error({ code: failure?.code }, 'Falha ao processar requisição.');
     return reply.code(500).send({ error: 'Não foi possível processar a requisição.' });
   });
+
+  // Cabecalho Date no relogio de referencia (o do banco no modo integrado): o app se alinha por ele.
+  if (options.integrated) app.addHook('onSend', async (_request, reply, payload) => { reply.header('Date', new Date(dbNow()).toUTCString()); return payload; });
 
   app.addHook('preHandler', async (request, reply) => {
     if (['/health','/v1/auth/login'].includes(request.routeOptions.url ?? '')) return;

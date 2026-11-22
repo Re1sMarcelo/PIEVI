@@ -16,10 +16,24 @@ export function resolveApiBaseUrl(configuredUrl: string | undefined, hostUri: st
   return `http://${host}:3000`;
 }
 
-export async function requestJson<T>(url: string, token?: string, options: RequestInit = {}, timeoutMs = 12_000): Promise<T> {
+/** Filled by requestJson when given: when the request left/arrived and the server's HTTP Date header. */
+export interface ResponseTiming { sentAt?: number; receivedAt?: number; serverDateMs?: number }
+
+/**
+ * Server clock minus phone clock, in ms, from the HTTP Date header (1 s resolution: +500 ms centres it).
+ * The API stamps lastSeenAt/expiry with its own clock; a skewed notebook or phone otherwise makes fresh
+ * data look stale and fresh requests look expired. Returns 0 when the header is missing.
+ */
+export function serverClockOffset(timing: ResponseTiming) {
+  if (timing.serverDateMs === undefined || !Number.isFinite(timing.serverDateMs) || timing.sentAt === undefined || timing.receivedAt === undefined) return 0;
+  return Math.round(timing.serverDateMs + 500 - (timing.sentAt + timing.receivedAt) / 2);
+}
+
+export async function requestJson<T>(url: string, token?: string, options: RequestInit = {}, timeoutMs = 12_000, timing?: ResponseTiming): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    if (timing) timing.sentAt = Date.now();
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
@@ -29,6 +43,11 @@ export async function requestJson<T>(url: string, token?: string, options: Reque
         ...options.headers,
       },
     });
+    if (timing) {
+      timing.receivedAt = Date.now();
+      const date = response.headers?.get?.('date');
+      timing.serverDateMs = date ? Date.parse(date) : undefined;
+    }
     const body = await response.json().catch(() => null) as (T & { error?: string; reason?: string }) | null;
     if (!response.ok) throw new ApiError(
       response.status === 502 || response.status === 504

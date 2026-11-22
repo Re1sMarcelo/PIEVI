@@ -188,7 +188,7 @@ static Inputs readInputs(bool sample) {
 // ----------------------------------------------------------------------------- serial
 static void printStatus() {
   Serial.printf("[STATUS] boot=%u bootId=%s conexao=%s wifi=%s ip=%s mqtt=%s hora=%s cfg=v%d fila=%u descartadas=%u\n",
-    link1->bootNumber(), link1->bootId().c_str(), link1->connectionId().c_str(), WiFi.status() == WL_CONNECTED ? "ok" : "off",
+    (unsigned)link1->bootNumber(), link1->bootId().c_str(), link1->connectionId().c_str(), WiFi.status() == WL_CONNECTED ? "ok" : "off",
     WiFi.localIP().toString().c_str(), mqttUp ? "ok" : "off", clockReliable() ? "confiavel" : "SEM HORA",
     link1->activeConfigVersion(), (unsigned)link1->pendingCount(), (unsigned)link1->droppedMessages());
   Serial.printf("[STATUS] B1=%s %s %s | B2=%s %s %s | nivel=%s\n",
@@ -250,7 +250,7 @@ void setup() {
   link1 = new v1::Link(*ctrl, prefs, {DEVICE_ID, FW_VERSION}, mqttPublish);
   link1->begin(bootNumber);
   ctrl->reportReboot(resetReasonText());
-  Serial.printf("[BOOT] bootNumber=%u bootId=%s\n", bootNumber, link1->bootId().c_str());
+  Serial.printf("[BOOT] bootNumber=%u bootId=%s\n", (unsigned)bootNumber, link1->bootId().c_str());
 
   // 3) rede e relogio
   rxQueue = xQueueCreate(16, sizeof(String*));

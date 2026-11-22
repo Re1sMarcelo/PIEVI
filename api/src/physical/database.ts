@@ -1,11 +1,17 @@
 import { PGlite } from '@electric-sql/pglite';
-import type { Pool } from 'pg';
+import { Pool } from 'pg';
 import { readFile } from 'node:fs/promises';
 import { migrate } from '../persistence/migrations.js';
-import type { Sql, TransactionDatabase } from '../persistence/database.js';
+import { postgresDatabase, type Sql, type TransactionDatabase } from '../persistence/database.js';
 import { isPasswordHash } from '../auth/password.js';
 
 export interface PhysicalIdentity { chipId: string; username: string; passwordHash: string }
+/** Interface comum ao PGlite e ao pool externo, usada pela bancada e pelos testes. */
+export interface PhysicalDb {
+  query<T extends Record<string, any> = Record<string, any>>(sql: string, params?: any[]): Promise<{ rows: T[] }>;
+  close(): Promise<void>;
+}
+export interface PhysicalData { db: PhysicalDb; database: TransactionDatabase; queryProxy: Pick<Pool, 'query'> }
 
 export async function provisionPhysical(database: TransactionDatabase, identity: PhysicalIdentity) {
   if (!identity.chipId.trim() || /^(virtual|simulator):/i.test(identity.chipId) || identity.chipId.length > 200 ||
@@ -44,4 +50,37 @@ export async function openPhysicalDatabase(identity: PhysicalIdentity, folder?: 
     const queryProxy = { query: (sql: string, params?: any[]) => db.query(sql, params) } as unknown as Pick<Pool, 'query'>;
     return { db, database, queryProxy };
   } catch (error) { await db.close(); throw error; }
+}
+
+/** Host do banco externo, sem usuario/senha, para mensagens e /health. */
+export function describeDatabaseUrl(url: string) {
+  try { const u = new URL(url); return `${u.hostname}:${u.port || 5432}/${u.pathname.slice(1)}`; } catch { return 'URL inválida'; }
+}
+
+/**
+ * Mesmo esquema/migracoes/provisionamento do banco embarcado, num PostgreSQL externo (ex.: Railway).
+ * TLS: servidores gerenciados como o proxy publico do Railway usam certificado proprio; a conexao e cifrada,
+ * mas o certificado so e verificado com sslmode=verify-full na URL. sslmode=disable desliga o TLS (rede local).
+ */
+export async function openPhysicalPostgres(identity: PhysicalIdentity, url: string) {
+  const parsed = new URL(url);
+  const mode = parsed.searchParams.get('sslmode');
+  parsed.searchParams.delete('sslmode');
+  const ssl = mode === 'disable' ? false : { rejectUnauthorized: mode === 'verify-full' };
+  const pool = new Pool({ connectionString: parsed.toString(), ssl, max: 5, connectionTimeoutMillis: 10_000, idleTimeoutMillis: 30_000 });
+  pool.on('error', () => undefined);   // conexao ociosa derrubada pelo servidor: o pool recria na proxima consulta
+  const database = postgresDatabase(pool);
+  try {
+    const exists = (await pool.query<{ name: string | null }>("SELECT to_regclass('public.usuarios')::text name")).rows[0].name;
+    if (!exists) for (const file of ['001_schema.sql', '002_catalogo_alertas.sql']) await pool.query(await readFile(new URL(`../../../db/${file}`, import.meta.url), 'utf8'));
+    try { await migrate(database, true); }
+    catch (error) { throw new Error(`Banco externo com esquema incompatível com o PIEVI (${error instanceof Error ? error.message : 'falha na migração'}). Use um banco/schema exclusivo do PIEVI.`); }
+    await provisionPhysical(database, identity);
+    // Mesma interface minima do PGlite usada por quem chama (query generica + close).
+    const db = {
+      query: async <T extends Record<string, any>>(sql: string, params?: any[]) => ({ rows: (await pool.query(sql, params)).rows as T[] }),
+      close: () => pool.end(),
+    };
+    return { db, database, queryProxy: pool as Pick<Pool, 'query'> };
+  } catch (error) { await pool.end().catch(() => undefined); throw error; }
 }

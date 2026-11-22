@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { requestJson, resolveApiBaseUrl } from './apiConnection';
+import { requestJson, resolveApiBaseUrl, serverClockOffset, type ResponseTiming } from './apiConnection';
 import { waitForCommand } from './commandPolling';
 export { ApiError } from './apiConnection';
 import type {
@@ -34,7 +34,13 @@ export const api = {
     method: 'POST', body: JSON.stringify({ username, password }),
   }),
   logout: (token: string) => request<{ ok: boolean }>('/v1/auth/logout', token, { method: 'POST' }),
-  snapshot: (token: string) => request<Snapshot>(`${devicePath}/snapshot`, token),
+  // simulationClockOffsetMs passa a incluir a diferenca entre o relogio do servidor e o do celular:
+  // idade das leituras e prazo dos comandos ficam no relogio da API, mesmo com notebook/celular desacertados.
+  snapshot: async (token: string) => {
+    const timing: ResponseTiming = {};
+    const snapshot = await requestJson<Snapshot>(`${getApiBaseUrl()}${devicePath}/snapshot`, token, {}, undefined, timing);
+    return { ...snapshot, simulationClockOffsetMs: (snapshot.simulationClockOffsetMs ?? 0) + serverClockOffset(timing) };
+  },
   history: (token: string) => request<DeviceHistory>(`${devicePath}/history`, token),
   simulation: (token: string, scenario: SimulationScenario) => request<Snapshot>(`${devicePath}/simulation`, token, {
     method: 'PUT', body: JSON.stringify({ scenario }),

@@ -4,6 +4,7 @@ import { configError } from '../controlConfig.js';
 import { commandDto } from './reader.js';
 import type { IntegratedRuntime } from './runtime.js';
 import { DomainRejection } from '../persistence/store.js';
+import { dbNow } from '../persistence/clock.js';
 
 export function registerIntegratedRoutes(app:FastifyInstance,runtime:IntegratedRuntime) {
   const root='/v1/devices/:deviceId'; const device=runtime.options.deviceId;
@@ -31,7 +32,7 @@ export function registerIntegratedRoutes(app:FastifyInstance,runtime:IntegratedR
     const body=request.body as Partial<CommandRequest>|null;
     if (!body || !['B1','B2'].includes(body.pumpId as string) || !['AUTO','MANUAL_ON','MANUAL_OFF','TEST','RESET_FAULT','IGNORE_FLOAT'].includes(body.action as string)
       || typeof body.commandId!=='string' || typeof body.expiresAt!=='string') return reply.code(400).send({error:'Comando inválido.'});
-    if (Date.parse(body.expiresAt)<=Date.now() || !Number.isFinite(Date.parse(body.expiresAt))) return reply.code(422).send({error:'Pedido do aplicativo vencido. Atualize e tente novamente.'});
+    if (Date.parse(body.expiresAt)<=dbNow() || !Number.isFinite(Date.parse(body.expiresAt))) return reply.code(422).send({error:'Pedido do aplicativo vencido. Atualize e tente novamente.'});
     if (!runtime.worker.status.ready) throw new DomainRejection('Broker MQTT indisponível.');
     const result=await runtime.store.createCommand(device,token(request),{commandId:body.commandId,action:body.action!,pumpId:body.pumpId!,durationSeconds:body.durationSeconds,supervisionConfirmed:body.supervisionConfirmed});
     const command=commandDto(result.command);return reply.code(command.status==='completed' ? 200 : 202).send(command);

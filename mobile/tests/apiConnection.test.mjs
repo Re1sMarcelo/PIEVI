@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ApiError, requestJson, resolveApiBaseUrl } from '../src/apiConnection.ts';
+import { ApiError, requestJson, resolveApiBaseUrl, serverClockOffset } from '../src/apiConnection.ts';
 import {createServer} from 'node:http';
 
 test('endereço configurado tem prioridade, inclusive no navegador', () => {
@@ -69,4 +69,23 @@ test('requisição pendente é interrompida no prazo, liberando login e carregam
   }));
   await assert.rejects(requestJson('https://example.com', undefined, {}, 20), /demorou para responder/);
   assert.equal(aborted, true);
+});
+
+test('diferença de relógio vem do cabeçalho Date da API (notebook adiantado 16 s)', async () => {
+  const server = createServer((_req, res) => {
+    res.setHeader('Date', new Date(Date.now() + 16_000).toUTCString());
+    res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}');
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const timing = {};
+    await requestJson(`http://127.0.0.1:${server.address().port}/`, undefined, {}, 2000, timing);
+    const offset = serverClockOffset(timing);
+    assert.ok(offset > 14_500 && offset < 17_500, `offset ${offset}`);
+  } finally { server.close(); }
+});
+
+test('sem cabeçalho Date a correção de relógio é zero', () => {
+  assert.equal(serverClockOffset({}), 0);
+  assert.equal(serverClockOffset({ sentAt: 1000, receivedAt: 1100, serverDateMs: NaN }), 0);
 });

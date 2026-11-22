@@ -5,16 +5,20 @@ export async function checkPhysicalBench(options: { url: string; username: strin
   const checks: Check[] = [];
   const record = (name: string, pass: boolean, detail: string, pending = false) => checks.push({ name, status: pass ? 'ok' : pending ? 'pending' : 'failed', detail });
   let token: string | undefined;
+  let serverOffsetMs = 0;   // relogio da API (cabecalho Date) - relogio local: compara lastSeenAt no relogio da API
   const request = async (path: string, init: RequestInit = {}) => {
+    const sent = Date.now();
     const response = await fetch(`${options.url}${path}`, { ...init, signal: AbortSignal.timeout(8000), headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers,
     } });
+    const date = Date.parse(response.headers.get('date') ?? '');
+    if (Number.isFinite(date)) serverOffsetMs = date + 500 - (sent + Date.now()) / 2;
     if (!response.ok) throw new Error(`HTTP ${response.status} em ${path}`);
     return response.json();
   };
   try {
     const health = await request('/health');
-    record('Modo físico', health.mode === 'mqtt' && health.simulation === false && health.storage === 'pglite', 'Esperado mode=mqtt, simulation=false e storage=pglite.');
+    record('Modo físico', health.mode === 'mqtt' && health.simulation === false && ['pglite', 'postgres'].includes(health.storage), `Esperado mode=mqtt, simulation=false e banco pglite ou postgres (atual: ${health.storage}).`);
     record('Broker', health.status === 'ok' && health.mqtt?.ready === true, 'A API precisa estar conectada e inscrita nos tópicos MQTT.');
     const login = await request('/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: options.username, password: options.password }) });
     token = login.token;
@@ -22,10 +26,10 @@ export async function checkPhysicalBench(options: { url: string; username: strin
     const snapshot: Snapshot = await request('/v1/devices/bancada-01/snapshot');
     record('Simulação desativada', snapshot.simulation === false && snapshot.mode === 'mqtt' && snapshot.scenarioControlsEnabled === false, 'Sem controles de cenários virtuais.');
     const history = await request('/v1/devices/bancada-01/history');
-    record('Histórico', Array.isArray(history.telemetry) && Array.isArray(history.events) && Array.isArray(history.alerts), 'Consulta do histórico gravado no banco local.');
+    record('Histórico', Array.isArray(history.telemetry) && Array.isArray(history.events) && Array.isArray(history.alerts), 'Consulta do histórico gravado no banco da bancada.');
     const pending = !!options.infrastructureOnly;
     record('ESP sincronizado', snapshot.online, 'O firmware precisa responder ao desafio sync.', pending);
-    record('Dados recentes', snapshot.telemetry.id !== 'unavailable' && Date.now() - Date.parse(snapshot.lastSeenAt) < 45000, 'Telemetria e estado precisam estar atualizados (menos de 45 s).', pending);
+    record('Dados recentes', snapshot.telemetry.id !== 'unavailable' && Date.now() + serverOffsetMs - Date.parse(snapshot.lastSeenAt) < 45000, 'Telemetria e estado precisam estar atualizados (menos de 45 s).', pending);
     record('Relógio do ESP', snapshot.telemetry.clockReliable, 'Sem UTC confiável o ESP recusa comandos, inclusive configuração.', pending);
     record('Sensores e calibração', snapshot.telemetry.dhtReliable && snapshot.telemetry.rootReliable && snapshot.telemetry.soilReliable, 'Conferir sensores e evento de calibração do solo.', pending);
     record('Nível de água', snapshot.telemetry.waterLevel === 'OK', 'Nível LOW bloqueia as bombas; conferir fisicamente a boia.', pending);

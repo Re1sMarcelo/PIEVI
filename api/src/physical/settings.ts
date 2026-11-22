@@ -12,6 +12,8 @@ export interface PhysicalSettings {
   brokerMode: 'local' | 'external'; brokerUrl: string;
   apiUsername: string; apiPassword: string; apiClientId: string; espPassword: string;
   operatorUsername: string; operatorPassword: string; operatorPasswordHash: string;
+  /** Opcional: PostgreSQL externo (postgresql://...). Vazio = PGlite embarcado em tmp/physical-bench/. */
+  databaseUrl?: string;
 }
 
 export function readPhysicalSettings(file = physicalSettingsFile): PhysicalSettings {
@@ -46,7 +48,13 @@ export function readPhysicalSettings(file = physicalSettingsFile): PhysicalSetti
   const operatorUsername = required('OPERATOR_USERNAME');
   const operatorPasswordHash = required('OPERATOR_PASSWORD_HASH');
   if (!/^[a-zA-Z0-9_.-]{3,100}$/.test(operatorUsername) || !isPasswordHash(operatorPasswordHash)) throw new Error('Credenciais do operador inválidas em .env.physical.');
-  return { deviceId: 'bancada-01', chipId, lanIp, apiPort: port('API_PORT'), mqttPort, brokerMode, brokerUrl,
+  const databaseUrl = values.PHYSICAL_DATABASE_URL?.trim() ?? '';
+  if (databaseUrl) {
+    let url: URL;
+    try { url = new URL(databaseUrl); } catch { throw new Error('PHYSICAL_DATABASE_URL inválida.'); }
+    if (!['postgres:', 'postgresql:'].includes(url.protocol) || !url.hostname || !url.pathname.slice(1)) throw new Error('Use PHYSICAL_DATABASE_URL=postgresql://USUARIO:SENHA@HOST:PORTA/BANCO, ou deixe vazio para o banco embarcado.');
+  }
+  return { deviceId: 'bancada-01', chipId, lanIp, apiPort: port('API_PORT'), mqttPort, brokerMode, brokerUrl, databaseUrl,
     apiUsername: brokerMode === 'local' ? 'api-local' : required('MQTT_API_USERNAME'),
     apiClientId: brokerMode === 'local' ? 'pievi-api-local' : required('MQTT_API_CLIENT_ID'),
     apiPassword: required('MQTT_API_PASSWORD'), espPassword: required('MQTT_ESP_PASSWORD'),
