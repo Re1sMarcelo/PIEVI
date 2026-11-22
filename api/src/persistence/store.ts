@@ -151,7 +151,7 @@ export class PostgresDeviceStore {
           (status='aceito' OR status IN ('pendente','enviado') AND valido_ate>clock_timestamp())`,[d.id])).rows.length;
         if (pending) throw new DomainRejection('Existe configuração aguardando confirmação. Aguarde antes de enviar outra.');
       }
-      if (input.action !== 'APPLY_CONFIG' && (!applied || Number(applied.versao) !== Number(s.config_versao))) throw new DomainRejection('Configuração aplicada ainda não reconciliada.');
+      if (input.action !== 'APPLY_CONFIG' && (!applied || Number(applied.versao) !== Number(s.config_versao))) throw new DomainRejection(applied ? 'Configuração aplicada ainda não reconciliada.' : 'Aplique a configuração em Controle antes de acionar as bombas.');
       if (['MANUAL_ON','TEST','IGNORE_FLOAT'].includes(input.action)) {
         if (!s.leitura_recebida_em || Date.parse(iso(s.leitura_recebida_em)!)<=Date.parse(now)-45000) throw new DomainRejection('Sensores sem atualização recente.');
         const reading=(await db.query('SELECT * FROM leituras WHERE dispositivo_id=$1 AND id=$2',[d.id,s.leitura_id])).rows[0];

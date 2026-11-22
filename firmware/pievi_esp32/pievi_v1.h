@@ -168,8 +168,9 @@ class Link {
     const uint32_t now = millis();
     if (sig != lastSig_ && now - lastStateMs_ >= 300) publishState(nullptr);
     if (now - lastStateMs_ >= kPeriodMs) publishState(nullptr);
-    // Heartbeat de 15 s (contrato) + envio antecipado quando a leitura muda de forma perceptivel.
-    if (now - lastTelemetryMs_ >= kPeriodMs || (now - lastTelemetryMs_ >= kMinTelemetryGapMs && telemetryChanged())) publishTelemetry();
+    // Heartbeat de 10 s (contrato: ate 15 s) + envio antecipado quando a leitura muda de forma perceptivel.
+    // Mudanca do nivel de agua sai na hora: e a informacao que libera/bloqueia as bombas no app.
+    if (now - lastTelemetryMs_ >= kPeriodMs || (now - lastTelemetryMs_ >= kMinTelemetryGapMs && telemetryChanged()) || c_.levelLow() != lastTel_.low) publishTelemetry();
     flush();
   }
 
@@ -189,7 +190,7 @@ class Link {
   bool debugPayloads = true;   // imprime na serial todo payload publicado (sem segredos)
 
  private:
-  static constexpr uint32_t kPeriodMs = 15000, kResendMs = 5000, kMinTelemetryGapMs = 7500;   // banco remoto (Railway) grava ~1 msg a cada 3 s
+  static constexpr uint32_t kPeriodMs = 10000, kResendMs = 5000, kMinTelemetryGapMs = 3000;   // API no Railway grava em ~1 s
   // Ultima telemetria publicada, para detectar mudanca perceptivel.
   struct LastTelemetry { bool dht = false, root = false, soil = false, low = true; float t = NAN, rh = NAN, rootT = NAN, soilPct = NAN; } lastTel_;
   static bool moved(float a, float b, float eps) { return std::isfinite(a) != std::isfinite(b) || (std::isfinite(a) && std::fabs(a - b) >= eps); }
