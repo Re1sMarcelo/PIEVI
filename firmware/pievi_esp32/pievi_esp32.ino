@@ -71,6 +71,7 @@ static bool mqttPublish(const String& topic, const String& body, bool retain) {
 
 static void onMqttEvent(void*, esp_event_base_t, int32_t id, void* data) {
   auto* e = static_cast<esp_mqtt_event_handle_t>(data);
+  if (!e || e->client != mqttClient) return;   // cliente antigo sendo desmontado em segundo plano
   switch ((esp_mqtt_event_id_t)id) {
     case MQTT_EVENT_CONNECTED: evConnected = true; break;
     case MQTT_EVENT_DISCONNECTED: evDisconnected = true; break;
@@ -92,10 +93,19 @@ static void onMqttEvent(void*, esp_event_base_t, int32_t id, void* data) {
   }
 }
 
+// stop/destroy esperam o task interno do MQTT sair; com TLS ele pode ficar preso numa leitura de rede por mais
+// que o watchdog do loop (15 s) e a placa reiniciava. O cliente antigo e desmontado num task proprio; o loop segue.
+static void mqttDestroyTask(void* handle) {
+  auto old = static_cast<esp_mqtt_client_handle_t>(handle);
+  esp_mqtt_client_stop(old); esp_mqtt_client_destroy(old);
+  vTaskDelete(nullptr);
+}
 static void mqttStop() {
   if (!mqttClient) return;
   mqttUp = false; link1->onDisconnected();
-  esp_mqtt_client_stop(mqttClient); esp_mqtt_client_destroy(mqttClient); mqttClient = nullptr;
+  esp_mqtt_client_handle_t old = mqttClient;
+  mqttClient = nullptr;   // a partir daqui os eventos do cliente antigo sao ignorados (onMqttEvent)
+  if (xTaskCreate(mqttDestroyTask, "mqttStop", 4096, old, 1, nullptr) != pdPASS) { esp_mqtt_client_stop(old); esp_mqtt_client_destroy(old); }
 }
 
 static void mqttStart() {

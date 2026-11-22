@@ -331,7 +331,9 @@ class Controller {
   bool alertOpen(const std::string& code, int pi = -1) { return findOpen(code, pi) != nullptr; }
 
   // ------------------------------------------------------------ sensores
-  void startupHold() { irrCooldownEnd_ = in_.nowMs + cfg_.cooldownIrrigMin * MIN; mistPauseEnd_ = in_.nowMs + cfg_.pausaNevoaMin * MIN; irrSince_ = mistSince_ = in_.nowMs; }
+  // Pausa apos o boot: 2 min (protege contra reinicios em sequencia) - o cooldown entre ciclos continua o da config.
+  static constexpr int kBootHoldIrrigMin = 2;
+  void startupHold() { irrCooldownEnd_ = in_.nowMs + kBootHoldIrrigMin * MIN; mistPauseEnd_ = in_.nowMs + cfg_.pausaNevoaMin * MIN; irrSince_ = mistSince_ = in_.nowMs; }
 
   void processSamples() {
     const int64_t now = in_.nowMs;
